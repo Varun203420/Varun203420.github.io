@@ -1,18 +1,97 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HCDE 439 – Assignment 1: Independent LED Blinks</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height: 1.55; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+    h1,h2 { margin: .2rem 0 .6rem }
+    figure { margin: 1rem 0 }
+    img { max-width: 100%; height: auto; border-radius: 8px; }
+    figcaption { color: #555; font-size: .95rem }
+    pre { background:#f6f8fa; padding:1rem; overflow-x:auto; border-radius:8px; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+    table { border-collapse: collapse; margin: 1rem 0; width: 100%; }
+    th, td { border: 1px solid #ddd; padding: .5rem; text-align:left; }
+    th { background:#fafafa; }
+    .small { color:#666; font-size:.95rem }
+  </style>
+</head>
+<body>
+  <h1>HCDE 439 – Assignment 1: Independent LED Blinks</h1>
+  <p class="small">Author: Varun Hariharan • Uno R3 Starter Kit</p>
 
-    <title>Example Student's HCDE 439 Physical Computing Page!</title>
+  <!-- Circuit photo or breadboard diagram -->
+  <h2>What my circuit looks like</h2>
+  <figure>
+    <img src="blink.gif" alt="Animated GIF of three LEDs blinking at different speeds">
+    <figcaption>Three parallel branches with one resistor per LED. Pins D8, D9, D10 drive Red/Green/Blue LEDs; all cathodes go to the ground rail.</figcaption>
+  </figure>
 
-    <link href="style.css" rel="stylesheet" type="text/css" />
-  </head>
-  <body>
-    <h1>Example Student's Assignment 1!</h1>
-    <div class="header">
-      <img src="red-panda.jpg" />
-      <p>Here is all the documentation for assignment 1!</p>
-    </div>
-  </body>
+  <!-- Schematic -->
+  <h2>Schematic drawing</h2>
+  <figure>
+    <img src="schematic.png" alt="Schematic: D8/D9/D10 → resistor → LED → GND">
+    <figcaption>Independent GPIO pins (D8/D9/D10) each drive an LED through its own series resistor to GND. Proper symbols and labels included.</figcaption>
+  </figure>
+
+  <!-- Resistor math -->
+  <h2>Resistor calculations (Ohm’s Law)</h2>
+  <p>Target current: ~10&nbsp;mA per LED. Formula: <em>R = (5 V − V<sub>f</sub>)/I</em>.</p>
+  <table>
+    <thead><tr><th>LED</th><th>V<sub>f</sub> (V)</th><th>I (A)</th><th>R ideal (Ω)</th><th>Chosen (Ω)</th><th>Actual I (mA)</th></tr></thead>
+    <tbody>
+      <tr><td>Red (D8)</td><td>2.0</td><td>0.010</td><td>300</td><td>330</td><td>≈ 9.1</td></tr>
+      <tr><td>Green (D9)</td><td>2.2</td><td>0.010</td><td>280</td><td>330</td><td>≈ 8.5</td></tr>
+      <tr><td>Blue (D10)</td><td>3.0</td><td>0.010</td><td>200</td><td>220</td><td>≈ 9.1</td></tr>
+    </tbody>
+  </table>
+
+  <!-- Voltage vs time figure for Q1 -->
+  <h2>Voltage vs Time (Q1)</h2>
+  <figure>
+    <img src="hcde439_voltage_vs_time.png" alt="Voltage across each LED vs time (square waves at Vf)">
+    <figcaption>Each LED’s voltage is ~0&nbsp;V when OFF and ~its forward-voltage plateau when ON: Red ≈ 2.0&nbsp;V, Green ≈ 2.2&nbsp;V, Blue ≈ 3.0&nbsp;V. Periods: 0.6&nbsp;s, 1.4&nbsp;s, 2.26&nbsp;s (50% duty).</figcaption>
+  </figure>
+
+  <!-- Code -->
+  <h2>Firmware (.ino) – fully commented</h2>
+  <p class="small">Download the file: <a href="a1_blink.ino">a1_blink.ino</a></p>
+  <pre><code>// HCDE 439 – A1: Independent LED blinks with non-blocking timers (millis())
+// Pins: D8 (LED1), D9 (LED2), D10 (LED3)
+const byte LED_PINS[3] = {8, 9, 10};
+unsigned long intervals[3] = {300, 700, 1130};
+unsigned long lastToggle[3] = {0, 0, 0};
+bool stateLED[3] = {false, false, false};
+
+void setup() {
+  for (byte i = 0; i &lt; 3; i++) {
+    pinMode(LED_PINS[i], OUTPUT);   // set pin to output mode
+    digitalWrite(LED_PINS[i], LOW); // ensure LED starts off
+  }
+}
+
+void loop() {
+  unsigned long now = millis();     // non-blocking time base
+  for (byte i = 0; i &lt; 3; i++) {
+    if (now - lastToggle[i] &gt;= intervals[i]) {
+      stateLED[i] = !stateLED[i];                // flip state
+      digitalWrite(LED_PINS[i], stateLED[i]);    // write to pin
+      lastToggle[i] = now;                       // remember toggle time
+    }
+  }
+}
+</code></pre>
+
+  <!-- Answers -->
+  <h2>Answers to additional questions</h2>
+  <ol>
+    <li><strong>Q1:</strong> See the voltage vs time figure above; three square waves at each LED’s V<sub>f</sub> with the periods shown.</li>
+    <li><strong>Q2:</strong> About 18 practical independent pins (avoid D0/D1). At ~10&nbsp;mA each ≈ 180&nbsp;mA total; safer at 5–8&nbsp;mA per LED or use external drivers when scaling.</li>
+    <li></li>
+    <li><strong>Q4:</strong> Blinking appears steady around 50–60&nbsp;Hz (period ≤ 16–20&nbsp;ms).</li>
+    <li><strong>Q5 (AI tools):</strong> I used ChatGPT to plan resistor values with Ohm’s Law, write non-blocking code using <code>millis()</code>, generate the V–t figure, and structure this page. I verified values and tested on my Uno.</li>
+  </ol>
+</body>
 </html>
