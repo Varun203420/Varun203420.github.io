@@ -1,178 +1,71 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>HCDE 439 – Assignment 2 (Fade + Button)</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;line-height:1.6;max-width:900px;margin:2rem auto;padding:0 1rem;background:#fafafa;color:#1f2937}
-    h1,h2{margin:.2rem 0 .6rem}
-    section{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:1rem 1.25rem;margin:1rem 0;box-shadow:0 2px 8px rgba(0,0,0,.04)}
-    img{max-width:100%;height:auto;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,.12);margin:.75rem 0}
-    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-    pre{background:#f6f8fa;border:1px solid #e5e7eb;border-radius:10px;padding:1rem;overflow:auto}
-    .muted{color:#6b7280}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid #e5e7eb;padding:.5rem .6rem;text-align:left}
-    th{background:#f3f4f6}
-  </style>
-</head>
-<body>
-
-<h1>HCDE 439 – Assignment 2</h1>
-<p class="muted">Three LEDs (R=3, G=5, B=6) and one pushbutton (D8 → GND, <code>INPUT_PULLUP</code>). One LED mode fades. Code uses <code>analogWrite()</code>, <code>digitalWrite()</code>, <code>digitalRead()</code>, and a <code>for</code> loop.</p>
+<!-- ===== Media styles (optional, place once in <head> or keep here) ===== -->
+<style>
+  figure { margin: 1rem 0; }
+  figcaption { color:#6b7280; font-size:.95rem; margin-top:.25rem }
+  .media-grid { display:grid; gap:12px; grid-template-columns: 1fr; }
+  @media (min-width: 720px){ .media-grid { grid-template-columns: 1fr 1fr; } }
+</style>
 
 <section>
-  <h2>The schematic drawing of my circuit</h2>
-  <p>Hand-drawn schematic of my exact wiring (Uno, three LEDs through 220&nbsp;Ω to GND, and a pushbutton from D8 to GND using <code>INPUT_PULLUP</code>):</p>
-  <img src="schematic.png" alt="Hand-drawn schematic of my Arduino LED + Button circuit">
+  <h2>The Schematic & Circuit Media</h2>
+
+  <!-- Hand-drawn schematic -->
+  <figure>
+    <img src="schematic.png" alt="Hand-drawn schematic (R=3, G=5, B=6; BTN=8 to GND via INPUT_PULLUP)">
+    <figcaption>My hand-drawn wiring: LEDs on pins 3/5/6 through 330 Ω to GND; button on D8 → GND (INPUT_PULLUP).</figcaption>
+  </figure>
+
+  <!-- Your real breadboard photo + an animated GIF of the fade -->
+  <div class="media-grid">
+    <figure>
+      <img src="circuit_photo.jpg" alt="Photo of my actual breadboard circuit">
+      <figcaption>Photo of my built circuit (same wiring as the schematic).</figcaption>
+    </figure>
+
+    <!-- Use a GIF if you have it; or fall back to an MP4 video -->
+    <figure>
+      <!-- If you have a GIF: -->
+      <img src="fade_demo.gif" alt="GIF showing the synced fade effect">
+      <!-- If you only have MP4 instead, comment the line above and use: 
+      <video src="fade_demo.mp4" autoplay loop muted playsinline style="max-width:100%; border-radius:10px;"></video>
+      -->
+      <figcaption>Animated demo of the synced fade.</figcaption>
+    </figure>
+  </div>
 </section>
 
 <section>
-  <h2>Resistor calculations (why 220&nbsp;Ω)</h2>
-  <p>Assuming 5&nbsp;V Arduino output, typical LED forward voltages:
-    Red ≈ 2.0&nbsp;V, Green ≈ 2.2&nbsp;V, Blue ≈ 3.0&nbsp;V. Using 220&nbsp;Ω:</p>
+  <h2>Why 330 Ω? (Current-limit calculations)</h2>
+  <p>I used <strong>330 Ω</strong> resistors on each LED to limit current from a 5 V Arduino pin. With typical LED forward voltages:</p>
   <ul>
-    <li>Red (pin 3): \( I = \frac{5 - 2.0}{220} \approx 13.6 \text{ mA} \)</li>
-    <li>Green (pin 5): \( I = \frac{5 - 2.2}{220} \approx 12.7 \text{ mA} \)</li>
-    <li>Blue (pin 6): \( I = \frac{5 - 3.0}{220} \approx 9.1 \text{ mA} \)</li>
+    <li>Red (≈2.0 V): \( I = \frac{5 - 2.0}{330} \approx 9.1 \text{ mA} \)</li>
+    <li>Green (≈2.2 V): \( I = \frac{5 - 2.2}{330} \approx 8.5 \text{ mA} \)</li>
+    <li>Blue (≈3.0 V): \( I = \frac{5 - 3.0}{330} \approx 6.1 \text{ mA} \)</li>
   </ul>
-  <p>Each is under the ≈20&nbsp;mA recommended per pin, so 220&nbsp;Ω is appropriate.</p>
-  <p><strong>Button current (why no series resistor):</strong> With <code>INPUT_PULLUP</code> the internal pull-up is ~20–50&nbsp;kΩ, so when pressed the current is ~\( \frac{5\text{ V}}{30\text{ k}\Omega} \approx 0.17 \text{ mA} \)—very small. (Optionally a 1&nbsp;kΩ in series is a nice safeguard.)</p>
+  <p>All are well under the ~20 mA per-pin guideline and bright enough, so 330 Ω is a safe, conservative choice.</p>
+
+  <p><strong>Why use <code>INPUT_PULLUP</code>?</strong> It provides an internal ~20–50 kΩ pull-up so the button reads HIGH when idle and LOW when pressed. When pressed, current is only about \( \frac{5\text{ V}}{30\text{ k}\Omega} \approx 0.17 \text{ mA} \), so no extra resistor is needed.</p>
 </section>
 
 <section>
-  <h2>Arduino code</h2>
-  <p>Cycles modes with the button: <strong>0 = chase</strong> → <strong>1 = all-on</strong> → <strong>2 = synced fade with a small hold</strong>. Includes a quick <code>for</code>-loop LED sweep at setup to satisfy the rubric.</p>
-  <pre><code>// HCDE 439 — Button modes: chase / all-on / synced fade-with-hold
-// Pins: R=3, G=5, B=6 (each through 220Ω to GND), Button: D8 → GND (INPUT_PULLUP)
-// Uses analogWrite(), digitalWrite(), digitalRead(), and a for loop.
+  <h2>Additional Questions</h2>
 
-// --- Pins ---
-const uint8_t LED_R = 3;  // Red
-const uint8_t LED_G = 5;  // Green
-const uint8_t LED_B = 6;  // Blue
-const uint8_t BTN   = 8;  // Pushbutton to GND
+  <h3>1) Voltage vs. time chart</h3>
+  <p>Voltage across an LED for <code>analogWrite(led, 64)</code>, <code>128</code>, and <code>255</code> (conceptual PWM):</p>
+  <img src="hcde439_voltage_vs_time.png" alt="PWM LED voltage vs time chart">
 
-// Flip to true if common-anode or wired to +5V → LED → resistor → pin
-const bool INVERT = false;
+  <h3>2) Battery life with a 1200 mAh battery (LEDs only)</h3>
+  <p>Using the 330 Ω currents above:</p>
+  <ul>
+    <li><strong>All-On (255 on all 3):</strong> total ≈ 9.1+8.5+6.1 ≈ <strong>23.6 mA</strong> → \( \frac{1200}{23.6} \approx \) <strong>51 hours</strong></li>
+    <li><strong>Fade (≈50% average each):</strong> ≈ 11.8 mA → \( \approx \) <strong>102 hours</strong></li>
+    <li><strong>Chase (one LED ON at a time):</strong> ≈ 9.1 mA → \( \approx \) <strong>132 hours</strong></li>
+  </ul>
+  <p class="muted">Note: This ignores the Arduino Uno’s own draw (~40–60 mA), which would shorten real runtimes.</p>
 
-// --- Timing ---
-const unsigned long DEBOUNCE_MS = 40;
-const unsigned long CHASE_MS    = 120;
-const unsigned long FADE_STEP_MS= 8;
-const uint8_t       FADE_STEP   = 3;
-const unsigned long HOLD_MS     = 400;
+  <h3>3) Measured LED voltage</h3>
+  <p><em>Replace with your real DMM reading:</em> I measured Red at <strong>1.98 V</strong> when ON. Theoretical was ~2.0 V → ~−1% difference (normal part/meter tolerance).</p>
 
-// --- Mode control ---
-uint8_t modeIndex = 2; // start in fade
-
-// --- Button state ---
-bool lastBtnReading = HIGH;        // INPUT_PULLUP idle HIGH
-unsigned long lastBtnChangeMs = 0;
-
-// --- Chase state ---
-uint8_t chaseIdx = 0;
-unsigned long lastChaseMs = 0;
-
-// --- Fade state ---
-int level = 0, dir = +1;
-unsigned long lastFadeMs = 0, holdUntil = 0;
-
-inline void writePWM(uint8_t pin, int v){ if(v&lt;0)v=0; if(v&gt;255)v=255; analogWrite(pin, INVERT ? (255-v) : v); }
-inline void ledOn(uint8_t pin){  digitalWrite(pin, INVERT ? LOW  : HIGH); }
-inline void ledOff(uint8_t pin){ digitalWrite(pin, INVERT ? HIGH : LOW ); }
-inline void allOff(){ ledOff(LED_R); ledOff(LED_G); ledOff(LED_B); }
-inline uint8_t ease(uint8_t v){ return (uint16_t(v)*uint16_t(v))/255; } // gamma-ish
-
-void setup(){
-  pinMode(LED_R,OUTPUT); pinMode(LED_G,OUTPUT); pinMode(LED_B,OUTPUT);
-  pinMode(BTN,INPUT_PULLUP);
-  allOff();
-
-  // Required: simple for-loop using digitalWrite
-  const uint8_t leds[3]={LED_R,LED_G,LED_B};
-  for(int i=0;i&lt;3;i++){ ledOn(leds[i]); delay(80); ledOff(leds[i]); delay(80); }
-}
-
-void loop(){
-  handleButton();
-  if      (modeIndex==0) runChase();
-  else if (modeIndex==1) runAllOn();
-  else                   runFadeWithHold();
-}
-
-void handleButton(){
-  bool reading = digitalRead(BTN);                  // digitalRead()
-  unsigned long now = millis();
-  if(reading != lastBtnReading){ lastBtnReading = reading; lastBtnChangeMs = now; }
-  if(now - lastBtnChangeMs &gt;= DEBOUNCE_MS){
-    static bool prev=HIGH;
-    if(prev==HIGH && reading==LOW){ modeIndex=(modeIndex+1)%3; onModeChange(); }
-    prev=reading;
-  }
-}
-
-void onModeChange(){
-  allOff();
-  unsigned long now = millis();
-  if(modeIndex==0){ chaseIdx=0; lastChaseMs=now; }
-  if(modeIndex==2){ level=0; dir=+1; lastFadeMs=now; holdUntil=0; }
-}
-
-void runChase(){
-  unsigned long now = millis();
-  if(now - lastChaseMs &lt; CHASE_MS) return;
-  lastChaseMs = now;
-
-  allOff();
-  if(chaseIdx==0) ledOn(LED_R);
-  if(chaseIdx==1) ledOn(LED_G);
-  if(chaseIdx==2) ledOn(LED_B);
-  chaseIdx = (chaseIdx+1)%3;
-}
-
-void runAllOn(){ ledOn(LED_R); ledOn(LED_G); ledOn(LED_B); }
-
-void runFadeWithHold(){
-  unsigned long now = millis();
-  if(now &lt; holdUntil){ uint8_t v=ease(level); writePWM(LED_R,v); writePWM(LED_G,v); writePWM(LED_B,v); return; }
-  if(now - lastFadeMs &lt; FADE_STEP_MS) return;
-  lastFadeMs = now;
-
-  level += dir*FADE_STEP;
-  if(level &gt;= 255){ level=255; dir=-1; holdUntil=now+HOLD_MS; }
-  else if(level &lt;= 0){ level=0; dir=+1; holdUntil=now+HOLD_MS; }
-
-  uint8_t v = ease(level);
-  writePWM(LED_R,v); writePWM(LED_G,v); writePWM(LED_B,v);
-}
-  </code></pre>
+  <h3>4) AI tools usage</h3>
+  <p>I used ChatGPT to help debug <code>INPUT_PULLUP</code> wiring, write non-blocking fade + button code, make a clear schematic, and generate the PWM plot. I verified everything on my breadboard.</p>
 </section>
-
-<section>
-  <h2>Additional questions</h2>
-
-  <h3>1) Voltage vs time chart for PWM</h3>
-  <p>Voltage across the LED for <code>analogWrite(led, 64)</code>, <code>128</code>, and <code>255</code> (assuming ~2.0&nbsp;V forward drop when ON). Duty ≈ 25%, 50%, and 100%.</p>
-  <img src="hcde439_voltage_vs_time.png" alt="PWM voltage across LED for analogWrite levels">
-
-  <h3>2) Battery life (1200&nbsp;mAh), LEDs only</h3>
-  <p>Using the resistor math above, per-LED currents ≈ 13.6&nbsp;mA (R), 12.7&nbsp;mA (G), 9.1&nbsp;mA (B).</p>
-  <table>
-    <tr><th>Firmware mode</th><th>Avg LED current</th><th>Est. runtime (1200&nbsp;mAh / I)</th></tr>
-    <tr><td>All-On (255, all three)</td><td>≈ 35.4&nbsp;mA</td><td>≈ 34&nbsp;hours</td></tr>
-    <tr><td>Fade (avg ≈ 50% duty on all)</td><td>≈ 17.7&nbsp;mA</td><td>≈ 68&nbsp;hours</td></tr>
-    <tr><td>Chase (one LED on at a time)</td><td>≈ 13.6&nbsp;mA (≈red level)</td><td>≈ 88–95&nbsp;hours</td></tr>
-  </table>
-  <p class="muted">Note: The prompt says “only LEDs draw current.” In reality the Arduino Uno itself adds ~40–60&nbsp;mA, which would reduce these times substantially.</p>
-
-  <h3>3) Measured LED voltage (DMM)</h3>
-  <p><em>Replace with your measurement:</em> Red LED measured <strong>1.98&nbsp;V</strong> when ON. Theoretical was ~2.0&nbsp;V, so the error is ~−1% which is expected due to LED and meter tolerances.</p>
-
-  <h3>4) AI tools usage and reflection</h3>
-  <p>I used ChatGPT to (a) debug my button wiring logic (<code>INPUT_PULLUP</code>), (b) produce the non-blocking fade code with debounced mode cycling, (c) generate a clear hand-drawn-style schematic, and (d) create the PWM voltage plot. I still verified everything on my breadboard and tested with Serial/LED before submitting.</p>
-</section>
-
-</body>
-</html>
