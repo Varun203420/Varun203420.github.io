@@ -1,34 +1,23 @@
-<!-- ===== Media styles (optional, place once in <head> or keep here) ===== -->
-<style>
-  figure { margin: 1rem 0; }
-  figcaption { color:#6b7280; font-size:.95rem; margin-top:.25rem }
-  .media-grid { display:grid; gap:12px; grid-template-columns: 1fr; }
-  @media (min-width: 720px){ .media-grid { grid-template-columns: 1fr 1fr; } }
-</style>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>HCDE 439 – Assignment 2 (Fade + Button)</title>
 
-<section>
-  <h2>The Schematic & Circuit Media</h2>
-
-  <!-- Hand-drawn schematic -->
-  <figure>
-    <img src="schematic2.png" alt="Hand-drawn schematic (R=3, G=5, B=6; BTN=8 to GND via INPUT_PULLUP)">
-    <figcaption>My hand-drawn wiring: LEDs on pins 3/5/6 through 330 Ω to GND; button on D8 → GND (INPUT_PULLUP).</figcaption>
-  </figure>
-
-  <!-- Your real breadboard photo + an animated GIF of the fade -->
-  <div class="media-grid">
-    <figure>
-      <img src="circuit_photo.jpg" alt="Photo of my actual breadboard circuit">
-      <figcaption>Photo of my built circuit (same wiring as the schematic).</figcaption>
-    </figure>
-
-    <figure>
-      <!-- If you have a GIF: -->
-      <img src="fade_demo.gif" alt="GIF showing the synced fade effect">
-      <!-- Or use an MP4 instead:
-      <video src="fade_demo.mp4" autoplay loop muted playsinline style="max-width:100%; border-radius:10px;"></video>
-      -->
-      <figcaption>Animated demo of the synced fade.</figcaption>
-    </figure>
-  </div>
-</section>
+  <style>
+    /* Layout */
+    :root { color-scheme: light; }
+    body{
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.6;
+      background:#fafafa; color:#1f2937; margin:0;
+    }
+    .container{
+      max-width: 900px;        /* prevents the “zoomed” look */
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    section{
+      background:#fff; border:1px solid #e5e7eb; border-radius:12px;
+      padding:1rem 1
