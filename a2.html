@@ -1,18 +1,142 @@
 <!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HCDE 439 – Assignment 2</title>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      line-height: 1.55;
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+      background: #fafafa;
+    }
+    h1, h2 { color: #222; margin-top: 1.5rem; }
+    img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin: 1rem 0;
+      box-shadow: 0 0 6px rgba(0,0,0,0.15);
+    }
+    pre {
+      background: #f6f8fa;
+      padding: 1rem;
+      overflow-x: auto;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+    code { font-family: ui-monospace, Consolas, "Courier New", monospace; }
+  </style>
+</head>
+<body>
 
-    <title>Example Student's HCDE 439 Physical Computing Page!</title>
+  <h1>HCDE 439 – Assignment 2</h1>
+  <h2>The Schematic Drawing of My Circuit:</h2>
+  <p>
+    Below is my hand-drawn schematic. It shows how I connected three LEDs and a push button to my Arduino Uno.
+  </p>
 
-    <link href="style.css" rel="stylesheet" type="text/css" />
-  </head>
-  <body>
-    <h1>Example Student's Assignment 2!</h1>
-    <div class="header">
-      <img src="red-panda.jpg" />
-      <p>Here is all the documentation for assignment 2!</p>
-    </div>
-  </body>
+  <img src="YOUR_IMAGE_FILE.jpg" alt="Hand-drawn schematic of my Arduino LED circuit">
+
+  <h3>Resistor Calculations:</h3>
+  <p>
+    I limited the LED current using 220 Ω resistors. For a 5 V Arduino pin and LED forward voltage of about 2 V,  
+    <strong>R = (5 V – 2 V) / 0.015 A ≈ 200 Ω</strong>, so 220 Ω is a safe standard choice.  
+    <br>
+    For the button, since it uses <code>INPUT_PULLUP</code>, the current is about 0.17 mA when pressed, so no external resistor is needed.
+  </p>
+
+  <h2>Arduino Code:</h2>
+  <pre><code>
+// HCDE 439 — Button modes: chase / all-on / fade
+// Uses analogWrite(), digitalWrite(), digitalRead(), and a for loop
+
+const int LED_R = 3;    // Red LED on pin 3 (PWM)
+const int LED_G = 5;    // Green LED on pin 5 (PWM)
+const int LED_B = 6;    // Blue LED on pin 6 (PWM)
+const int BTN   = 8;    // Pushbutton to GND
+
+bool INVERT = false;    // Set true if common-anode or wired to +5V
+int modeIndex = 2;      // Start with fade mode
+
+// Fade timing
+unsigned long FADE_STEP_MS = 8;
+int FADE_STEP = 3;
+unsigned long HOLD_MS = 400;
+int level = 0;
+int dir = +1;
+unsigned long lastFade = 0, holdUntil = 0;
+
+void setup() {
+  pinMode(LED_R, OUTPUT);
+  pinMode(LED_G, OUTPUT);
+  pinMode(LED_B, OUTPUT);
+  pinMode(BTN, INPUT_PULLUP);
+
+  // Simple for-loop blink (to demonstrate digitalWrite and loops)
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(LED_R, HIGH);
+    delay(100);
+    digitalWrite(LED_R, LOW);
+    delay(100);
+  }
+}
+
+void loop() {
+  if (digitalRead(BTN) == LOW) { // read button (LOW when pressed)
+    modeIndex = (modeIndex + 1) % 3; // cycle modes
+    delay(200);
+  }
+
+  if (modeIndex == 2) runFade();
+  else if (modeIndex == 1) runAllOn();
+  else runChase();
+}
+
+void writeLED(int pin, int val) {
+  analogWrite(pin, INVERT ? (255 - val) : val);
+}
+
+void runFade() {
+  unsigned long now = millis();
+  if (now < holdUntil) return;
+  if (now - lastFade < FADE_STEP_MS) return;
+  lastFade = now;
+
+  level += dir * FADE_STEP;
+  if (level >= 255) { level = 255; dir = -1; holdUntil = now + HOLD_MS; }
+  if (level <= 0)   { level = 0;   dir = +1; holdUntil = now + HOLD_MS; }
+
+  writeLED(LED_R, level);
+  writeLED(LED_G, level);
+  writeLED(LED_B, level);
+}
+
+void runAllOn() {
+  digitalWrite(LED_R, HIGH);
+  digitalWrite(LED_G, HIGH);
+  digitalWrite(LED_B, HIGH);
+}
+
+void runChase() {
+  static int idx = 0;
+  digitalWrite(LED_R, LOW);
+  digitalWrite(LED_G, LOW);
+  digitalWrite(LED_B, LOW);
+  if (idx == 0) digitalWrite(LED_R, HIGH);
+  if (idx == 1) digitalWrite(LED_G, HIGH);
+  if (idx == 2) digitalWrite(LED_B, HIGH);
+  idx = (idx + 1) % 3;
+  delay(120);
+}
+  </code></pre>
+
+  <h2>Additional Questions:</h2>
+  <p><strong>Why did I choose 220 Ω resistors?</strong> They safely limit current to around 15–20 mA per LED, which protects both the LEDs and the Arduino pins.</p>
+  <p><strong>Why use INPUT_PULLUP?</strong> It removes the need for an external resistor, and ensures a stable default HIGH state when the button isn’t pressed.</p>
+
+</body>
 </html>
+
