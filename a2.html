@@ -54,22 +54,22 @@
     <section>
       <h2>The Schematic &amp; Circuit Media</h2>
 
-      <!-- Hand-drawn schematic (NEW FILE NAME) -->
+      <!-- Hand-drawn schematic -->
       <figure>
-        <img src="schematic2.png?v=3" alt="Hand-drawn schematic (R=3, G=5, B=6 through 330Ω; BTN=8 to GND using INPUT_PULLUP)">
+        <img src="schematic2.png?v=3"
+             alt="Hand-drawn schematic (R=3, G=5, B=6 through 330Ω; BTN=8 to GND using INPUT_PULLUP)">
         <figcaption>My hand-drawn wiring: LEDs on pins 3/5/6 through 330 Ω to GND; button on D8 → GND (<code>INPUT_PULLUP</code>).</figcaption>
       </figure>
 
       <!-- Real circuit photo + animated demo -->
       <div class="media-grid">
         <figure>
-          <img src="circuit_photo.jpg?v=2" alt="Photo of my actual breadboard circuit">
+          <img src="breadboard-photo.png?v=1" alt="Photo of my actual breadboard circuit">
           <figcaption>Photo of the built circuit (matches the schematic).</figcaption>
         </figure>
         <figure>
-          <!-- Prefer GIF; if you only have MP4, comment img and use the video tag below -->
-          <img src="fade_demo.gif?v=2" alt="GIF showing the synced fade effect">
-          <!-- <video src="fade_demo.mp4?v=2" autoplay loop muted playsinline></video> -->
+          <video src="fade-demo.mp4?v=1" autoplay loop muted playsinline
+                 style="max-width:100%; border-radius:10px;"></video>
           <figcaption>Animated demo of the synced fade.</figcaption>
         </figure>
       </div>
@@ -80,12 +80,12 @@
       <h2>Why 330 Ω? (Current-limit calculations)</h2>
       <p>I used <strong>330 Ω</strong> resistors on each LED to limit current from a 5 V Arduino pin. Typical LED forward voltages:</p>
       <ul>
-        <li>Red (≈2.0 V): \( I = \frac{5 - 2.0}{330} \approx 9.1 \text{ mA} \)</li>
-        <li>Green (≈2.2 V): \( I = \frac{5 - 2.2}{330} \approx 8.5 \text{ mA} \)</li>
-        <li>Blue (≈3.0 V): \( I = \frac{5 - 3.0}{330} \approx 6.1 \text{ mA} \)</li>
+        <li>Red (≈2.0 V): I = (5 − 2.0) / 330 ≈ <strong>9.1 mA</strong></li>
+        <li>Green (≈2.2 V): I = (5 − 2.2) / 330 ≈ <strong>8.5 mA</strong></li>
+        <li>Blue (≈3.0 V): I = (5 − 3.0) / 330 ≈ <strong>6.1 mA</strong></li>
       </ul>
       <p>All are well under the ~20 mA per-pin guideline and bright enough, so 330 Ω is a safe, conservative choice.</p>
-      <p><strong>Why <code>INPUT_PULLUP</code>?</strong> It provides an internal ~20–50 kΩ pull-up so the button reads HIGH when idle and LOW when pressed. When pressed, current is only \( \frac{5\text{ V}}{30\text{ k}\Omega} \approx 0.17 \text{ mA} \), so no external resistor is needed.</p>
+      <p><strong>Why <code>INPUT_PULLUP</code>?</strong> It provides an internal ~20–50 kΩ pull-up so the button reads HIGH when idle and LOW when pressed. When pressed, current is only ~5 V / 30 kΩ ≈ <strong>0.17 mA</strong>, so no external resistor is needed.</p>
     </section>
 
     <!-- Code -->
@@ -219,7 +219,10 @@ void runFadeWithHold(){
       <p><em>Replace with your real DMM reading:</em> Red measured <strong>1.98 V</strong> when ON. Theory ~2.0 V → ~−1% difference (normal part/meter tolerance).</p>
 
       <h3>4) AI tools usage</h3>
-      <p>I used AI to help debug <code>INPUT_PULLUP</code> wiring, write non-blocking fade + button code, make a clear schematic, and generate the PWM plot. I verified everything on my breadboard.</p>
+      <p>
+        I used AI only to help debug my <code>INPUT_PULLUP</code> button logic and to generate the PWM voltage chart.
+        All wiring, testing, and final code decisions were done by me.
+      </p>
     </section>
   </div>
 </body>
