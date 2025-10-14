@@ -14,7 +14,7 @@
       background:#fafafa; color:#1f2937; margin:0;
     }
     .container{
-      max-width: 900px;        /* prevents the “zoomed” look */
+      max-width: 900px;               /* prevents the “zoomed” look */
       margin: 2rem auto;
       padding: 0 1rem;
     }
@@ -43,6 +43,11 @@
     table{ border-collapse:collapse; width:100%; }
     th,td{ border:1px solid #e5e7eb; padding:.5rem .6rem; text-align:left; }
     th{ background:#f3f4f6; }
+
+    /* Orientation quick-fix */
+    .rot90  { transform: rotate(90deg);  transform-origin: center; margin:0 auto; }
+    .rot-90 { transform: rotate(-90deg); transform-origin: center; margin:0 auto; }
+    .figure-wrap { overflow: hidden; } /* keep rotated media contained */
   </style>
 </head>
 <body>
@@ -61,10 +66,11 @@
         <figcaption>My hand-drawn wiring: LEDs on pins 3/5/6 through 330 Ω to GND; button on D8 → GND (<code>INPUT_PULLUP</code>).</figcaption>
       </figure>
 
-      <!-- Real circuit photo + animated demo -->
+      <!-- Real circuit photo (rotated) + animated demo -->
       <div class="media-grid">
-        <figure>
-          <img src="breadboard-photo.png?v=1" alt="Photo of my actual breadboard circuit">
+        <figure class="figure-wrap">
+          <!-- If direction is wrong, swap rot-90 ↔ rot90 -->
+          <img class="rot-90" src="breadboard-photo.png?v=2" alt="Photo of my actual breadboard circuit">
           <figcaption>Photo of the built circuit (matches the schematic).</figcaption>
         </figure>
         <figure>
