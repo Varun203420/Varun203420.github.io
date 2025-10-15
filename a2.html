@@ -14,7 +14,7 @@
       background:#fafafa; color:#1f2937; margin:0;
     }
     .container{
-      max-width: 900px;               /* prevents the “zoomed” look */
+      max-width: 900px;  /* prevents the “zoomed” look */
       margin: 2rem auto;
       padding: 0 1rem;
     }
@@ -44,10 +44,20 @@
     th,td{ border:1px solid #e5e7eb; padding:.5rem .6rem; text-align:left; }
     th{ background:#f3f4f6; }
 
-    /* Orientation quick-fix */
+    /* Orientation quick-fix for sideways photos */
     .rot90  { transform: rotate(90deg);  transform-origin: center; margin:0 auto; }
     .rot-90 { transform: rotate(-90deg); transform-origin: center; margin:0 auto; }
-    .figure-wrap { overflow: hidden; } /* keep rotated media contained */
+    .figure-wrap { overflow:hidden; }
+
+    /* Keep rotated image from becoming a tall skinny strip */
+    .fix-img{
+      width:auto;
+      height:350px;       /* tweak 300–450px to taste */
+      object-fit:contain; /* show whole image inside box */
+      border-radius:10px;
+      display:block;
+      margin:0 auto;
+    }
   </style>
 </head>
 <body>
@@ -66,15 +76,16 @@
         <figcaption>My hand-drawn wiring: LEDs on pins 3/5/6 through 330 Ω to GND; button on D8 → GND (<code>INPUT_PULLUP</code>).</figcaption>
       </figure>
 
-      <!-- Real circuit photo (rotated) + animated demo -->
+      <!-- Real circuit photo (rotated + size-fixed) and animated demo -->
       <div class="media-grid">
         <figure class="figure-wrap">
-          <!-- If direction is wrong, swap rot-90 ↔ rot90 -->
-          <img class="rot-90" src="breadboard-photo.png?v=2" alt="Photo of my actual breadboard circuit">
+          <!-- If rotation is opposite, swap rot-90 ↔ rot90 -->
+          <img class="rot-90 fix-img" src="breadboard-photo.png?v=3" alt="Photo of my actual breadboard circuit">
           <figcaption>Photo of the built circuit (matches the schematic).</figcaption>
         </figure>
+
         <figure>
-          <video src="fade-demo.mp4?v=1" autoplay loop muted playsinline
+          <video src="fade-demo.mp4?v=2" autoplay loop muted playsinline
                  style="max-width:100%; border-radius:10px;"></video>
           <figcaption>Animated demo of the synced fade.</figcaption>
         </figure>
