@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HCDE 439 – Assignment 3</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <h1>Assignment 3 – Photoresistor &amp; Dual-LED Control</h1>
+  <p>Varun Hariharan</p>
+  <nav>
+    <a href="index.html">Home</a> ·
+    <a href="a0.html">A0</a> ·
+    <a href="a1.html">A1</a> ·
+    <a href="a2.html">A2</a> ·
+    <strong>A3</strong>
+  </nav>
+</header>
+
+<section>
+  <h2>Overview</h2>
+  <p>
+    I built a circuit that reads a photoresistor (LDR) through a voltage divider and changes the state of
+    two LEDs. When it’s bright, the green LED turns on; when it’s dark, the red LED turns on. The code uses
+    <code>analogRead()</code>, <code>map()</code>, <code>constrain()</code>, <code>analogWrite()</code>, an
+    <code>if</code>-statement, and prints to the Serial Monitor. I justify resistor choices and the divider math below.
+  </p>
+</section>
+
+<section>
+  <h2>Circuit Photo</h2>
+  <p>My breadboard build:</p>
+  <img src="a3-circuit.jpg" alt="Assignment 3 circuit photo" width="700" />
+</section>
+
+<section>
+  <h2>Schematic</h2>
+  <p>Simplified diagram matching my wiring:</p>
+  <img src="a3-schematic.png" alt="Assignment 3 schematic" width="700" />
+</section>
+
+<section>
+  <h2>Voltage Divider Explanation</h2>
+  <p>
+    The photoresistor (LDR) changes resistance with light. Paired with a fixed 10&nbsp;kΩ resistor, it forms a voltage
+    divider whose output goes to A0. The node voltage is
+    <em>V<sub>out</sub> = V<sub>in</sub> · R<sub>bottom</sub> / (R<sub>top</sub> + R<sub>bottom</sub>)</em>.
+    With V<sub>in</sub>=5&nbsp;V:
+  </p>
+  <ul>
+    <li><strong>LDR on top (to +5V):</strong> brighter → LDR↓ → V<sub>out</sub> ↑ (A0 higher)</li>
+    <li><strong>LDR on bottom (to GND):</strong> brighter → LDR↓ → V<sub>out</sub> ↓ (A0 lower)</li>
+  </ul>
+  <p>
+    I used 10&nbsp;kΩ to produce a wide, readable span on A0 with a typical LDR (≈1&nbsp;kΩ bright to &gt;50&nbsp;kΩ dark).
+    Each LED has a 220&nbsp;Ω series resistor: ≈(5&nbsp;V − 2&nbsp;V)/220&nbsp;Ω ≈ 13–14&nbsp;mA, safe for the pin.
+  </p>
+</section>
+
+<section>
+  <h2>Firmware (Arduino)</h2>
+  <p>Final code used on my board (bright → green on D3, dark → red on D5):</p>
+  <pre><code>/* 
+  HCDE 439 – Assignment 3
+  Student: Varun Hariharan
+  LDR divider on A0 drives two LEDs: bright → GREEN (D3) on, dark → RED (D5) on.
+  Uses analogRead(), map(), constrain(), analogWrite(), if-statement, and Serial.
+*/
+
+int sensorValue = 0;    // last sensor reading (0–1023)
+int outputValue = 0;    // mapped PWM value (0–255)
+
+const int GREEN_PIN = 3;   // ~3 supports analogWrite
+const int RED_PIN   = 5;   // ~5 supports analogWrite
+
+void setup() {
+  Serial.begin(9600);          // serial for debugging/screenshot
+  pinMode(GREEN_PIN, OUTPUT);  // set LED pins as outputs
+  pinMode(RED_PIN, OUTPUT);
+}
+
+void loop() {
+  sensorValue = analogRead(A0);                // read divider node
+  outputValue = map(sensorValue, 50, 100, 0, 255); // rough map; can be calibrated
+  outputValue = constrain(outputValue, 0, 255);    // clamp to valid PWM
+
+  if (outputValue &gt; 100) {        // treat as "bright"
+    analogWrite(GREEN_PIN, 255);  // green on, red off
+    analogWrite(RED_PIN, 0);
+  } else {                        // "dark"
+    analogWrite(GREEN_PIN, 0);    // red on, green off
+    analogWrite(RED_PIN, 255);
+  }
+
+  Serial.print("LED Output Value = ");
+  Serial.println(outputValue);
+
+  delay(5);                       // small pause for readability
+}</code></pre>
+  <p><em>Calibration tip:</em> after noting your A0 values in dark/bright, replace
+    <code>map(sensorValue, 50, 100, 0, 255)</code> with
+    <code>map(sensorValue, &lt;darkRaw&gt;, &lt;brightRaw&gt;, 0, 255)</code> for a perfect threshold.</p>
+</section>
+
+<section>
+  <h2>Serial Monitor Example</h2>
+  <img src="a3-serial.png" alt="Serial output" width="700" />
+</section>
+
+<section>
+  <h2>Circuit Operation (GIF / Video)</h2>
+  <p>Short demo of the LEDs switching as the light changes:</p>
+  <video src="a3-demo.mp4" width="700" controls></video>
+</section>
+
+<section>
+  <h2>Additional Questions</h2>
+
+  <h3>1) Can the variable resistor be R1 or R2?</h3>
+  <p><strong>Yes.</strong> Putting the LDR on the top (to +5&nbsp;V) or bottom (to GND) works; it just flips the
+  polarity of V<sub>out</sub>. Example with 10&nbsp;kΩ fixed:</p>
+  <ul>
+    <li><em>LDR on top:</em> bright (LDR≈1&nbsp;kΩ) → V<sub>out</sub> ≈ 4.55&nbsp;V; dark (LDR≈100&nbsp;kΩ) → ≈0.46&nbsp;V.</li>
+    <li><em>LDR on bottom:</em> bright (1&nbsp;kΩ) → ≈0.46&nbsp;V; dark (100&nbsp;kΩ) → ≈4.55&nbsp;V.</li>
+  </ul>
+
+  <h3>2) V vs. time graph</h3>
+  <p>I will hand-draw a plot with x = time and y = divider voltage at A0, showing steps as I cover/uncover the LDR.</p>
+
+  <h3>3) 10-bit PWM and 16-bit ADC—what changes?</h3>
+  <p>Today I map 10-bit ADC (0–1023) to 8-bit PWM (0–255). If PWM were 10-bit and ADC 16-bit, the scaling would be:</p>
+  <pre><code>// hypothetical 16-bit ADC to 10-bit PWM
+uint16_t raw16 = /* 0..65535 */;
+uint16_t pwm10 = map(raw16, 0, 65535, 0, 1023); // then analogWrite10bit(pwm10);
+</code></pre>
+  <p>If I still had 8-bit PWM, I’d map to 0–255 instead.</p>
+</section>
+
+<section>
+  <h2>Reflection</h2>
+  <p>
+    I verified the divider with Serial, adjusted a threshold that made sense for my room lighting,
+    and used two LEDs so the output wasn’t a single LED. The trickiest part was getting the rails and rows
+    right on the breadboard; once fixed, the readings and switching were consistent.
+  </p>
+</section>
+
+<footer>
+  <p><a href="index.html">← Back to Home</a></p>
+</footer>
+
+</body>
+</html>
