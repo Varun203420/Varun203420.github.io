@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>HCDE 439 – A4: SevSeg Countdown + Buzzer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --ink:#111827; --muted:#6b7280; --bg:#f8fafc; }
+    *{box-sizing:border-box}
+    body{margin:0; font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; color:var(--ink); background:var(--bg)}
+    main{max-width:980px; margin:36px auto; padding:0 16px}
+    header{margin-bottom:16px}
+    h1,h2{line-height:1.2; margin:.25rem 0 .5rem}
+    p,li{max-width:80ch}
+    .meta{color:var(--muted); margin:0 0 22px}
+    figure{margin:16px 0}
+    img,video{max-width:100%; border-radius:12px; display:block; background:#000}
+    figcaption{color:var(--muted); font-size:.95rem; margin-top:6px}
+    pre{background:#f3f4f6; padding:14px; overflow:auto; border-radius:12px; border:1px solid #e5e7eb}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+    table{border-collapse:collapse; margin:8px 0 16px}
+    td,th{border:1px solid #e5e7eb; padding:6px 8px; text-align:left}
+    .small{font-size:.95rem; color:var(--muted)}
+    .callout{background:#fff8e1;border:1px solid #ffe08a;padding:10px 12px;border-radius:10px}
+  </style>
+</head>
+<body>
+<main>
+
+  <header>
+    <h1>Assignment 4 — SevSeg Countdown + Buzzer</h1>
+    <p class="meta">Varun Hariharan · Autumn 2025 · HCDE 439</p>
+    <p class="small">
+      Two-digit countdown on a common-anode 7-segment (SevSeg) with per-second buzzer ticks and a 3-beep finish.
+      Display stability is maintained by calling <code>sevseg.refreshDisplay()</code> during waits.
+    </p>
+  </header>
+
+  <section id="overview">
+    <h2>Overview</h2>
+    <p>
+      I used the right-two digits of a 4-digit 5641AS display (resistors on segments a–g) and a piezo buzzer on D13.
+      The timer counts 10→00; each second the buzzer ticks briefly; at 0 it plays a short finish chirp.
+    </p>
+  </section>
+
+  <section id="parts">
+    <h2>Parts &amp; Wiring</h2>
+    <ul>
+      <li>Arduino Uno (5V)</li>
+      <li>4-digit 7-segment (common anode 5641AS) — using 2 rightmost digits</li>
+      <li>8 × 220–330 Ω resistors (on segments), breadboard, jumpers</li>
+      <li>Piezo buzzer on D13 → GND</li>
+    </ul>
+
+    <table>
+      <tr><th>Function</th><th>Pins</th><th>Notes</th></tr>
+      <tr><td>Digit select (two rightmost)</td><td>A2, A3</td><td>Swap if digits appear reversed</td></tr>
+      <tr><td>Segments a–g, dp</td><td>2,3,4,5,6,7,8, (dp unused)</td><td>Resistors on segments; dp disabled (255)</td></tr>
+      <tr><td>Buzzer</td><td>13</td><td>Passive buzzer can use <code>tone()</code> if preferred</td></tr>
+    </table>
+
+    <p class="callout"><strong>SevSeg config:</strong> <code>COMMON_ANODE</code>, <code>numDigits=2</code>, resistors on segments, brightness ≈70.</p>
+  </section>
+
+  <section id="media">
+    <h2>Media</h2>
+
+    <!-- (1) Breadboard / circuit photo -->
+    <figure>
+      <img src="A4_breadboard.jpg" alt="Breadboard with Arduino, right-two 7-seg digits wired via resistors, and buzzer on D13">
+      <figcaption>Figure 1. Breadboard / final build.</figcaption>
+    </figure>
+
+    <!-- (2) Demo video -->
+    <figure>
+      <video controls src="A4_demo.mp4" poster="A4_poster.png"></video>
+      <figcaption>Figure 2. Demo: 10→0 countdown with 1 Hz ticks and finish chirp.</figcaption>
+    </figure>
+
+    <!-- (3) Schematic -->
+    <figure>
+      <img src="A4_schematic.png" alt="Schematic of Arduino to SevSeg (segments with resistors) and buzzer wiring">
+      <figcaption>Figure 3. Schematic wiring overview.</figcaption>
+    </figure>
+  </section>
+
+  <section id="code">
+    <h2>Code (Arduino)</h2>
+    <pre><code>// SevSeg countdown + buzzer (2 digits)
+// Keep display stable by refreshing during waits
+
+#include &lt;SevSeg.h&gt;
+SevSeg sevseg;
+
+const int BUZZER = 13;
+
+void waitWithRefresh(unsigned long ms){
+  unsigned long t0 = millis();
+  while (millis() - t0 &lt; ms) sevseg.refreshDisplay();
+}
+
+void beep(int times,int onMs,int offMs){
+  for (int i=0;i&lt;times;i++){
+    digitalWrite(BUZZER,HIGH); waitWithRefresh(onMs);
+    digitalWrite(BUZZER,LOW);  waitWithRefresh(offMs);
+  }
+}
+
+void setup(){
+  pinMode(BUZZER, OUTPUT);
+  byte numDigits=2;
+  byte digitPins[]   = {A2, A3};                 // two rightmost digits
+  byte segmentPins[] = {2,3,4,5,6,7,8, 255};     // a,b,c,d,e,f,g, dp unused (255)
+  bool resistorsOnSegments=true;
+  byte hardwareConfig=COMMON_ANODE;
+  bool updateWithDelays=false, leadingZeros=true, disableDecPoint=true;
+
+  sevseg.begin(hardwareConfig,numDigits,digitPins,segmentPins,
+               resistorsOnSegments,updateWithDelays,leadingZeros,disableDecPoint);
+  sevseg.setBrightness(70);
+
+  beep(2,60,90); // start chirp
+}
+
+void loop(){
+  int seconds = 10;   // starting value
+  while(seconds &gt;= 0){
+    sevseg.setNumber(seconds, 0);        // show SS on 2 digits
+    digitalWrite(BUZZER, HIGH); waitWithRefresh(18);  // 18 ms tick
+    digitalWrite(BUZZER, LOW);  waitWithRefresh(982); // ~1.000 s total
+    seconds--;
+  }
+  beep(3,120,120);     // finish pattern
+  waitWithRefresh(1500);
+}
+</code></pre>
+  </section>
+
+  <section id="calibration">
+    <h2>Timing Calibration &amp; 1% Error</h2>
+    <p>
+      10-s run (avg of 3): 10.08&nbsp;s → error = (10.08–10.00)/10.00 = <strong>0.8%</strong> ✅.
+      If your run is long, trim the LOW interval a few ms (e.g., 982 → 978).
+    </p>
+  </section>
+
+  <section id="questions">
+    <h2>Questions</h2>
+
+    <h3>1) Draw a graph of pin voltage vs. time</h3>
+    <p>
+      During the countdown the buzzer pin outputs a narrow HIGH pulse every 1.0&nbsp;s
+      (~18&nbsp;ms HIGH, ~982&nbsp;ms LOW). After reaching 0, it plays a finish pattern of three
+      ~120&nbsp;ms beeps separated by ~120&nbsp;ms silence.
+    </p>
+    <figure>
+      <img src="buzzer_waveform.jpg" alt="Voltage at buzzer pin: 1 Hz short ticks during countdown, then three finish beeps">
+      <figcaption>Graph: 1&nbsp;Hz ticks during countdown, then 3-beep finish pattern.</figcaption>
+    </figure>
+
+    <h3>2) Input gives a wrong value 1% of the time</h3>
+    <pre><code>// Median-of-3 + confirm to reject rare spikes
+readings = [analogRead(A0), analogRead(A0), analogRead(A0)]
+m = MEDIAN(readings)
+if ABS(m - last_good) &lt;= epsilon:
+  value = m
+else:
+  confirm = MEDIAN([analogRead(A0), analogRead(A0), analogRead(A0)])
+  value = confirm
+last_good = value
+</code></pre>
+
+    <h3>3) Input is noisy: ±10% deviation</h3>
+    <pre><code>// Exponential moving average (EMA) + step clamp
+alpha = 0.2
+raw   = analogRead(A0)
+ema   = alpha*raw + (1-alpha)*ema_prev
+max_step = 0.08 * ema_prev
+if (ema - ema_prev) &gt; max_step: ema = ema_prev + max_step
+if (ema_prev - ema) &gt; max_step: ema = ema_prev - max_step
+ema_prev = ema; value = ema
+</code></pre>
+
+    <h3>4) AI usage</h3>
+    <p class="small">AI used only for debugging ideas and generating figures/graphs; final code authored by me.</p>
+  </section>
+
+  <section id="notes">
+    <h2>Troubleshooting</h2>
+    <ul>
+      <li>Digits reversed → swap entries in <code>digitPins[]</code>.</li>
+      <li>Segments scrambled → verify <code>segmentPins[]</code> order (a–g; dp disabled).</li>
+      <li>Flicker → avoid long <code>delay()</code>; keep calling <code>refreshDisplay()</code>.</li>
+    </ul>
+  </section>
+
+</main>
+</body>
+</html>
