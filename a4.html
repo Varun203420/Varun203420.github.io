@@ -85,12 +85,9 @@
     </figure>
   </section>
 
-  <section id="code">
-    <h2>Code (Arduino)</h2>
-    <pre><code>// SevSeg countdown + buzzer (2 digits)
-// Keep display stable by refreshing during waits
-
-#include &lt;SevSeg.h&gt;
+ <section id="code">
+  <h2>Code (Arduino)</h2>
+  <pre><code>#include &lt;SevSeg.h&gt;
 SevSeg sevseg;
 
 const int BUZZER = 13;
@@ -99,9 +96,8 @@ void waitWithRefresh(unsigned long ms){
   unsigned long t0 = millis();
   while (millis() - t0 &lt; ms) sevseg.refreshDisplay();
 }
-
 void beep(int times,int onMs,int offMs){
-  for (int i=0;i&lt;times;i++){
+  for(int i=0;i&lt;times;i++){
     digitalWrite(BUZZER,HIGH); waitWithRefresh(onMs);
     digitalWrite(BUZZER,LOW);  waitWithRefresh(offMs);
   }
@@ -109,33 +105,43 @@ void beep(int times,int onMs,int offMs){
 
 void setup(){
   pinMode(BUZZER, OUTPUT);
-  byte numDigits=2;
-  byte digitPins[]   = {A2, A3};                 // two rightmost digits
-  byte segmentPins[] = {2,3,4,5,6,7,8, 255};     // a,b,c,d,e,f,g, dp unused (255)
-  bool resistorsOnSegments=true;
-  byte hardwareConfig=COMMON_ANODE;
-  bool updateWithDelays=false, leadingZeros=true, disableDecPoint=true;
 
-  sevseg.begin(hardwareConfig,numDigits,digitPins,segmentPins,
-               resistorsOnSegments,updateWithDelays,leadingZeros,disableDecPoint);
-  sevseg.setBrightness(70);
+  // Use only two rightmost digits (the ones on pins 8 and 6)
+  byte numDigits = 2;
+  byte digitPins[]   = {A2, A3};             // only the last two digits
+  byte segmentPins[] = {2, 3, 4, 5, 6, 7, 8, 255}; // a,b,c,d,e,f,g,dp (no dp)
 
-  beep(2,60,90); // start chirp
+  bool resistorsOnSegments = true;
+  byte hardwareConfig = COMMON_CATHODE;      // set to match this build
+  bool updateWithDelays = false;
+  bool leadingZeros = true;                   // show 00–99
+  bool disableDecPoint = true;                // no decimal point
+
+  sevseg.begin(hardwareConfig, numDigits, digitPins, segmentPins,
+               resistorsOnSegments, updateWithDelays, leadingZeros, disableDecPoint);
+  sevseg.setBrightness(100);
 }
 
 void loop(){
-  int seconds = 10;   // starting value
-  while(seconds &gt;= 0){
-    sevseg.setNumber(seconds, 0);        // show SS on 2 digits
-    digitalWrite(BUZZER, HIGH); waitWithRefresh(18);  // 18 ms tick
-    digitalWrite(BUZZER, LOW);  waitWithRefresh(982); // ~1.000 s total
-    seconds--;
+  // countdown 30 → 0
+  for (int t = 30; t &gt;= 0; t--){
+    unsigned long endAt = millis() + 1000;
+    while (millis() &lt; endAt){
+      sevseg.setNumber(t, true);   // shows 30..00
+      sevseg.refreshDisplay();
+    }
   }
-  beep(3,120,120);     // finish pattern
-  waitWithRefresh(1500);
-}
-</code></pre>
-  </section>
+
+  beep(6, 200, 150);  // finish beeps
+
+  // hold 00 for 2 seconds
+  unsigned long hold = millis() + 2000;
+  while (millis() &lt; hold){
+    sevseg.setNumber(0, true);
+    sevseg.refreshDisplay();
+  }
+}</code></pre>
+</section>
 
   <section id="calibration">
     <h2>Timing Calibration &amp; 1% Error</h2>
