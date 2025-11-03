@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReflexMaster! — Final Project Proposal (HCDE 439)</title>
+  <meta name="description" content="ReflexMaster! — a reaction-time training game built with Arduino Uno for HCDE 439." />
+  <style>
+    :root { --bg:#ffffff; --ink:#111827; --muted:#6b7280; --card:#f8fafc; --border:#e5e7eb; --brand:#2563eb; }
+    * { box-sizing: border-box; }
+    body { margin:0; color:var(--ink); background:var(--bg);
+           font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+           line-height:1.65; }
+    .wrap { max-width: 920px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { margin: 0 0 .5rem; line-height: 1.25; }
+    h2 { margin: 1.5rem 0 .5rem; }
+    .meta { color: var(--muted); margin-bottom: 1rem; }
+    .box { background: var(--card); border:1px solid var(--border); border-radius: 12px; padding: 1rem 1.2rem; }
+    a { color: var(--brand); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    ul { padding-left: 1.25rem; }
+    figure { margin: 1rem 0; }
+    img { display:block; max-width:100%; height:auto; border-radius:12px; border:1px solid var(--border); }
+    .back { margin-top: 2rem; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>⚡ ReflexMaster! — Final Project Proposal</h1>
+      <p class="meta">by Varun Hariharan · HCDE 439</p>
+      <p class="box">
+        📑 View my proposal slide on Google Slides:
+        <a href="https://docs.google.com/presentation/d/1acHYqSQ1nF7aC731LlDjHwdhioqy4UwPib5_8CrSGG8/edit?slide=id.g39f927410b2_6_5#slide=id.g39f927410b2_6_5" target="_blank" rel="noopener">Open Slide Deck</a>
+      </p>
+    </header>
+
+    <section class="box">
+      <h2>Project Concept / Motivation</h2>
+      <p>
+        I want to build a handheld reflex-testing game that helps improve reaction time and focus.
+        When one of the LEDs randomly lights up, the player must press the matching button as quickly as possible.
+        The Arduino measures the delay between the LED turning on and the button press, then gives feedback through lights and sound.
+        This could help gamers or athletes train their reflexes in a fun and portable way.
+      </p>
+    </section>
+
+    <section>
+      <h2>Anticipated Bill of Materials</h2>
+      <ul>
+        <li>Arduino Uno R3</li>
+        <li>3× LEDs (red, green, blue)</li>
+        <li>3× push buttons</li>
+        <li>1× active buzzer</li>
+        <li>6× 220Ω resistors</li>
+        <li>Breadboard + jumper wires</li>
+        <li>Small cardboard for a gamepad-style enclosure</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Timeline &amp; Contingency Plan</h2>
+      <ul>
+        <li><strong>Week 1:</strong> Build LED + button circuit; test each component individually.</li>
+        <li><strong>Week 2:</strong> Implement random LED prompts and reaction timing logic.</li>
+        <li><strong>Week 3:</strong> Add buzzer feedback and assemble into a cardboard enclosure.</li>
+      </ul>
+      <p><strong>Plan B:</strong> If timing code is tricky, simplify to a “first-to-press” mode. If wiring is messy, reduce to 2 LEDs/buttons.</p>
+    </section>
+
+    <section>
+      <h2>Sketch</h2>
+      <!-- Make sure this path matches your repo: /images/reflexmaster-sketch.jpg -->
+      <figure>
+        <img src="images/reflexmaster-sketch.jpg" alt="ReflexMaster sketch showing a top view with three LEDs, three buttons, and a buzzer in a cardboard enclosure." />
+        <figcaption class="meta">Top view of the enclosure with LEDs, buttons, and buzzer.</figcaption>
+      </figure>
+    </section>
+
+    <p class="back"><a href="index.html">← Back to HCDE 439 home</a></p>
+  </main>
+</body>
+</html>
