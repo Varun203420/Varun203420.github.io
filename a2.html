@@ -110,107 +110,55 @@
       <h2>Arduino Code</h2>
       <p>Button cycles modes: <strong>0 = chase</strong> → <strong>1 = all-on</strong> → <strong>2 = synced fade with a hold at min/max</strong>. Includes a short <code>for</code>-loop LED sweep in <code>setup()</code>.</p>
       <pre><code>// HCDE 439 — Button modes: chase / all-on / synced fade-with-hold
-// Pins: R=3, G=5, B=6 (each through 330Ω to GND), Button: D8 → GND (INPUT_PULLUP)
-// Uses analogWrite(), digitalWrite(), digitalRead(), and a for loop.
+// HCDE 439 — Simple Button + Fade (INPUT_PULLUP wiring, LOW = pressed)
+// LEDs: R=3, G=5, B=6 (330Ω → GND)
+// Button: D8 → GND (internal pull-up enabled)
 
-// --- Pins ---
-const uint8_t LED_R = 3;  // Red
-const uint8_t LED_G = 5;  // Green
-const uint8_t LED_B = 6;  // Blue
-const uint8_t BTN   = 8;  // Pushbutton to GND
+const int LED_R = 3;
+const int LED_G = 5;
+const int LED_B = 6;
+const int BTN   = 8;
 
-// Flip true if common-anode or wired to +5V → LED → resistor → pin
-const bool INVERT = false;
+void setup() {
+  pinMode(LED_R, OUTPUT); pinMode(LED_G, OUTPUT); pinMode(LED_B, OUTPUT);
+  pinMode(BTN,   INPUT_PULLUP);  // idle HIGH, pressed LOW
 
-// --- Timing ---
-const unsigned long DEBOUNCE_MS = 40;
-const unsigned long CHASE_MS    = 120;
-const unsigned long FADE_STEP_MS= 8;
-const uint8_t       FADE_STEP   = 3;
-const unsigned long HOLD_MS     = 400;
-
-// --- Mode control ---
-uint8_t modeIndex = 2; // start in fade
-
-// --- Button state ---
-bool lastBtnReading = HIGH;        // INPUT_PULLUP idle HIGH
-unsigned long lastBtnChangeMs = 0;
-
-// --- Chase state ---
-uint8_t chaseIdx = 0;
-unsigned long lastChaseMs = 0;
-
-// --- Fade state ---
-int level = 0, dir = +1;
-unsigned long lastFadeMs = 0, holdUntil = 0;
-
-inline void writePWM(uint8_t pin, int v){ if(v&lt;0)v=0; if(v&gt;255)v=255; analogWrite(pin, INVERT ? (255-v) : v); }
-inline void ledOn(uint8_t pin){  digitalWrite(pin, INVERT ? LOW  : HIGH); }
-inline void ledOff(uint8_t pin){ digitalWrite(pin, INVERT ? HIGH : LOW ); }
-inline void allOff(){ ledOff(LED_R); ledOff(LED_G); ledOff(LED_B); }
-inline uint8_t ease(uint8_t v){ return (uint16_t(v)*uint16_t(v))/255; } // gamma-ish
-
-void setup(){
-  pinMode(LED_R,OUTPUT); pinMode(LED_G,OUTPUT); pinMode(LED_B,OUTPUT);
-  pinMode(BTN,INPUT_PULLUP);
-  allOff();
-
-  // Required: simple for-loop using digitalWrite
-  const uint8_t leds[3]={LED_R,LED_G,LED_B};
-  for(int i=0;i&lt;3;i++){ ledOn(leds[i]); delay(80); ledOff(leds[i]); delay(80); }
-}
-
-void loop(){
-  handleButton();
-  if      (modeIndex==0) runChase();
-  else if (modeIndex==1) runAllOn();
-  else                   runFadeWithHold();
-}
-
-void handleButton(){
-  bool reading = digitalRead(BTN);                  // digitalRead()
-  unsigned long now = millis();
-  if(reading != lastBtnReading){ lastBtnReading = reading; lastBtnChangeMs = now; }
-  if(now - lastBtnChangeMs &gt;= DEBOUNCE_MS){
-    static bool prev=HIGH;
-    if(prev==HIGH && reading==LOW){ modeIndex=(modeIndex+1)%3; onModeChange(); }
-    prev=reading;
+  const int leds[3] = {LED_R, LED_G, LED_B};
+  for (int i = 0; i < 3; i++) {  // brief sweep to satisfy "for loop" + digitalWrite
+    digitalWrite(leds[i], HIGH); delay(80);
+    digitalWrite(leds[i], LOW);  delay(80);
   }
 }
 
-void onModeChange(){
-  allOff();
-  unsigned long now = millis();
-  if(modeIndex==0){ chaseIdx=0; lastChaseMs=now; }
-  if(modeIndex==2){ level=0; dir=+1; lastFadeMs=now; holdUntil=0; }
-}
+void loop() {
+  if (digitalRead(BTN) == LOW) {     // pressed
+    delay(20);                       // tiny debounce
+    if (digitalRead(BTN) == LOW) {   // still pressed → run one fade cycle
 
-void runChase(){
-  unsigned long now = millis();
-  if(now - lastChaseMs &lt; CHASE_MS) return;
-  lastChaseMs = now;
+      // fade up
+      for (int v = 0; v <= 255; v += 5) {
+        analogWrite(LED_R, v);
+        analogWrite(LED_G, v);
+        analogWrite(LED_B, v);
+        delay(10);
+      }
+      // fade down
+      for (int v = 255; v >= 0; v -= 5) {
+        analogWrite(LED_R, v);
+        analogWrite(LED_G, v);
+        analogWrite(LED_B, v);
+        delay(10);
+      }
 
-  allOff();
-  if(chaseIdx==0) ledOn(LED_R);
-  if(chaseIdx==1) ledOn(LED_G);
-  if(chaseIdx==2) ledOn(LED_B);
-  chaseIdx = (chaseIdx+1)%3;
-}
-
-void runAllOn(){ ledOn(LED_R); ledOn(LED_G); ledOn(LED_B); }
-
-void runFadeWithHold(){
-  unsigned long now = millis();
-  if(now &lt; holdUntil){ uint8_t v=ease(level); writePWM(LED_R,v); writePWM(LED_G,v); writePWM(LED_B,v); return; }
-  if(now - lastFadeMs &lt; FADE_STEP_MS) return;
-  lastFadeMs = now;
-
-  level += dir*FADE_STEP;
-  if(level &gt;= 255){ level=255; dir=-1; holdUntil=now+HOLD_MS; }
-  else if(level &lt;= 0){ level=0; dir=+1; holdUntil=now+HOLD_MS; }
-
-  uint8_t v = ease(level);
-  writePWM(LED_R,v); writePWM(LED_G,v); writePWM(LED_B,v);
+      // wait for release so it doesn't retrigger immediately
+      while (digitalRead(BTN) == LOW) { delay(10); }
+    }
+  } else {
+    // idle: LEDs off
+    digitalWrite(LED_R, LOW);
+    digitalWrite(LED_G, LOW);
+    digitalWrite(LED_B, LOW);
+  }
 }
       </code></pre>
     </section>
