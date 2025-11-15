@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HCDE 439 – Assignment 5</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header>
+  <h1>Assignment 5 – MOSFET Motor Control with Button</h1>
+  <p>Varun Hariharan</p>
+  <nav>
+    <a href="index.html">Home</a> ·
+    <a href="a0.html">A0</a> ·
+    <a href="a1.html">A1</a> ·
+    <a href="a2.html">A2</a> ·
+    <a href="a3.html">A3</a> ·
+    <a href="a4.html">A4</a> ·
+    <strong>A5</strong>
+  </nav>
+</header>
+
+<section>
+  <h2>Overview</h2>
+  <p>
+    For Assignment 5, I built a simple motor control circuit using a MOSFET and a pushbutton.
+    The Arduino uses PWM on pin 9 to control the speed of a small DC motor. By default, the motor runs at a
+    slower speed, and when the user holds the button, the motor speeds up to full power.
+  </p>
+</section>
+
+<section>
+  <h2>User Interaction &amp; Behavior</h2>
+  <ul>
+    <li><strong>Button not pressed:</strong> Motor runs at a slow PWM speed (analogWrite = 80).</li>
+    <li><strong>Button pressed:</strong> Motor runs at full speed (analogWrite = 255).</li>
+    <li><strong>Release:</strong> Motor returns to slow mode.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>Circuit Description</h2>
+  <ul>
+    <li><strong>MOSFET gate</strong> → Arduino pin 9 (PWM).</li>
+    <li><strong>MOSFET source</strong> → GND.</li>
+    <li><strong>MOSFET drain</strong> → motor negative terminal.</li>
+    <li><strong>Motor positive terminal</strong> → +V supply.</li>
+    <li><strong>Flyback diode</strong> across motor (cathode to +V, anode to motor −).</li>
+    <li><strong>Pushbutton:</strong> one side to 5V, other side to pin 2, plus a 10kΩ pulldown to GND.</li>
+    <li><strong>All grounds common</strong> (Arduino GND, motor supply GND, MOSFET source).</li>
+  </ul>
+
+  <!-- PHYSICAL SETUP PHOTO PLACEHOLDER -->
+  <figure>
+    <img src="images/a5_setup_placeholder.jpg"
+         alt="Placeholder photo of the Assignment 5 breadboard and Arduino setup"
+         style="max-width: 100%; border: 1px solid #ccc;" />
+    <figcaption>Figure 1. Placeholder for the physical motor control setup photo.</figcaption>
+  </figure>
+
+  <!-- SCHEMATIC PLACEHOLDER -->
+  <figure>
+    <img src="images/a5_schematic_placeholder.png"
+         alt="Placeholder schematic for the MOSFET motor control circuit"
+         style="max-width: 100%; border: 1px solid #ccc;" />
+    <figcaption>Figure 2. Placeholder for the wiring schematic (Arduino, MOSFET, motor, diode, and button).</figcaption>
+  </figure>
+
+  <!-- GIF / DEMO PLACEHOLDER -->
+  <figure>
+    <img src="images/a5_demo_placeholder.gif"
+         alt="Placeholder animated GIF showing the motor speeding up when the button is pressed"
+         style="max-width: 100%; border: 1px solid #ccc;" />
+    <figcaption>Figure 3. Placeholder for an animated GIF of the circuit in action.</figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2>Arduino Code</h2>
+
+  <pre><code>// Assignment 5 – MOSFET Motor Control
+// Varun Hariharan
+
+const int motorPin = 9;
+const int buttonPin = 2;
+
+void setup() {
+  pinMode(motorPin, OUTPUT);
+  pinMode(buttonPin, INPUT); // external pulldown
+}
+
+void loop() {
+  int buttonState = digitalRead(buttonPin);
+
+  if (buttonState == HIGH) {
+    analogWrite(motorPin, 255); // full speed
+  } else {
+    analogWrite(motorPin, 80);  // slow speed
+  }
+
+  delay(50);
+}
+</code></pre>
+</section>
+
+<section>
+  <h2>Additional Questions</h2>
+
+  <h3>1. MOSFET datasheet – Maximum current between pins 2 and 3</h3>
+  <p>
+    According to the DMT6009LCT datasheet, the absolute maximum continuous drain current
+    between pins 2 (drain) and 3 (source) is <strong>37.2 A</strong> at 25°C.
+    The pulsed current rating is higher (up to 80 A) but only for very short pulses.
+  </p>
+
+  <h3>2. Schematic with Arduino, DC motor, flyback diode, and capacitors</h3>
+  <p>The circuit uses:</p>
+  <ul>
+    <li>DMT6009LCT N-MOSFET</li>
+    <li>DC motor</li>
+    <li>Flyback diode (1N4007 or 1N5819)</li>
+    <li>0.1 µF ceramic capacitor + 47–100 µF electrolytic capacitor across motor supply</li>
+  </ul>
+  <p>Summary of wiring:</p>
+  <ul>
+    <li>Motor + → motor supply (6–9V)</li>
+    <li>Motor − → MOSFET drain</li>
+    <li>MOSFET source → GND</li>
+    <li>MOSFET gate → Arduino pin 9 (through ~220Ω resistor)</li>
+    <li>Flyback diode across motor terminals (cathode to +V, anode to motor −)</li>
+    <li>Capacitors across motor power and ground to smooth noise</li>
+  </ul>
+
+  <h3>3. L293D schematic + pseudo-code for two motors</h3>
+  <p>
+    L293D connections:
+  </p>
+  <ul>
+    <li>VCC1 → 5V (logic supply)</li>
+    <li>VCC2 → motor supply</li>
+    <li>GND → Arduino GND</li>
+    <li>Motor A: OUT1/OUT2 → motor terminals, IN1/IN2 → Arduino pins, EN1 → Arduino pin HIGH</li>
+    <li>Motor B: OUT3/OUT4 → motor terminals, IN3/IN4 → Arduino pins, EN2 → Arduino pin HIGH</li>
+  </ul>
+
+<pre><code>// Pseudo-code for motor directions
+
+// A_IN1, A_IN2 → Motor A
+// B_IN3, B_IN4 → Motor B
+
+// 1. both forward
+A_IN1 = HIGH; A_IN2 = LOW;
+B_IN3 = HIGH; B_IN4 = LOW;
+delay(2000);
+
+// 2. both backward
+A_IN1 = LOW;  A_IN2 = HIGH;
+B_IN3 = LOW;  B_IN4 = HIGH;
+delay(2000);
+
+// 3. A forward, B back
+A_IN1 = HIGH; A_IN2 = LOW;
+B_IN3 = LOW;  B_IN4 = HIGH;
+delay(2000);
+
+// 4. A back, B forward
+A_IN1 = LOW;  A_IN2 = HIGH;
+B_IN3 = HIGH; B_IN4 = LOW;
+delay(2000);
+</code></pre>
+
+  <h3>4. Use of AI tools</h3>
+  <p>
+    Yes, I used an AI tool (ChatGPT) to help structure the written explanations and
+    clarify datasheet information. I still designed and tested the circuit myself.
+  </p>
+
+</section>
+
+<footer>
+  <p>HCDE 439 – Autumn 2025</p>
+</footer>
+
+</body>
+</html>
