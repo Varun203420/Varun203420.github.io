@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>HCDE 439 – Assignment 6</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #020617;
+      color: #e5e7eb;
+    }
+    header {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #1f2937;
+      background: #030712;
+    }
+    main {
+      padding: 1.5rem;
+    }
+    canvas {
+      display: block;
+      margin-top: 1rem;
+      border-radius: 12px;
+      border: 1px solid #1f2937;
+    }
+    #status {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Assignment 6 – The Web Talks Back</h1>
+    <p>Varun Hariharan – HCDE 439</p>
+  </header>
+
+  <main>
+    <p>
+      Click <strong>Connect</strong> to open the serial port. Cover the photoresistor
+      and press the button to change the visualization. Press
+      <strong>SPACE</strong> to toggle the real LED on pin&nbsp;9.
+    </p>
+
+    <div id="status">Not connected</div>
+
+    <!-- p5 + p5.webserial -->
+    <script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+    <script src="https://unpkg.com/@gohai/p5.webserial@^1/libraries/p5.webserial.js"></script>
+
+    <!-- Your sketch -->
+    <script src="sketch.js"></script>
+  </main>
+</body>
+</html>
