@@ -1,333 +1,86 @@
-<body>
-  <main class="page">
-    <!-- HEADER / INTRO -->
-    <header class="page-header">
-      <h1>Assignment 6 – Talking to the Web</h1>
-      <p><strong>Varun Hariharan – HCDE 439</strong></p>
-      <button id="connectBtn">Connect</button>
-      <p class="intro-text">
-        Click <strong>Connect</strong> to open the serial port. Cover the photoresistor and press the button
-        to change the visualization. Press <strong>SPACE</strong> to toggle the real LED on pin 9.
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, maximum-scale=1.0" />
+
+    <title>Varun's HCDE 439 Physical Computing Page!</title>
+
+    <link href="style.css" rel="stylesheet" />
+  </head>
+  <body>
+    <h1>Varun's HCDE 439 Physical Computing Page!</h1>
+
+    <div class="header">
+      <img src="varun.jpg" alt="Varun" />
+      <p>
+        My name is Varun! I'm an HCDE and Economics major and am definitely not a red
+        panda. I am excited to learn the following things in this class: how to
+        be a real student, and how to change my name.
       </p>
-    </header>
+    </div>
 
-    <!-- LIVE VISUALIZATION PANEL -->
-    <section id="viz-section">
-      <p id="statusText">Connecting...</p>
+    <div class="grid">
+      <div class="assignment">
+        <a href="a1.html">
+          <h2>Assignment 1: Blink!</h2>
+          <img src="varun.jpg" alt="A1 preview" />
+        </a>
+        <p>Assignment 1 was a panda!</p>
+      </div>
 
-      <div id="vizCard">
-        <!-- p5.js will draw into this container -->
-        <div id="p5-container"></div>
+      <div class="assignment">
+        <a href="a2.html">
+          <h2>Assignment 2: Fade!</h2>
+          <img src="varun.jpg" alt="A2 preview" />
+        </a>
+        <p>Assignment 2 was a panda!</p>
+      </div>
 
-        <p class="viz-help">
-          Press SPACE to toggle LED. Cover LDR / shine phone light to change visuals.
+      <!-- Assignment 3 card -->
+      <div class="assignment">
+        <a href="a3.html">
+          <h2>Assignment 3: Sensor → Dual LEDs</h2>
+          <img src="a3-circuit.jpg" alt="A3 circuit preview" />
+        </a>
+        <p>Photoresistor controls green/red LEDs via analogRead, map, analogWrite.</p>
+      </div>
+
+      <!-- Assignment 4 card with h4 and breadboard title image -->
+      <div class="assignment">
+        <a href="a4.html">
+          <h4>Assignment 4: SevSeg Countdown + Buzzer</h4>
+          <img src="A4_breadboard.jpg" alt="A4 breadboard: SevSeg two-digit countdown with buzzer" />
+        </a>
+        <p>
+          Libraries: <a href="https://github.com/DeanIsMe/SevSeg" rel="noopener" target="_blank">SevSeg</a>.
+          Two-digit countdown (30→00) on 7-segment with a finish beep sequence.
         </p>
       </div>
-    </section>
 
-    <!-- DOCUMENTATION SECTION -->
-    <section id="docs">
-      <!-- 1. OVERVIEW -->
-      <h2>Overview</h2>
-      <p>
-        This project connects an Arduino Uno to a p5.js webpage using the WebSerial API.
-        The circuit has two input devices – a photoresistor on analog pin A0 and a pushbutton
-        on digital pin 2 – and one output device, an LED on pin 9. The Arduino continuously
-        sends the light level and button state to the webpage. The webpage visualizes these
-        values and, when the user presses the SPACE key, sends a command back to the Arduino
-        to turn the physical LED on or off.
-      </p>
+      <!-- Assignment 5 card -->
+      <div class="assignment">
+        <a href="a5.html">
+          <h4>Assignment 5: MOSFET Motor Control</h4>
+          <img src="A5_setup.jpg" alt="A5 motor control circuit preview" />
+        </a>
+        <p>
+          MOSFET-driven DC motor with a pushbutton to switch between slow PWM and full-speed boost, plus
+          protection with a flyback diode and decoupling capacitors.
+        </p>
+      </div>
 
-      <!-- 2. SCHEMATIC + CALCULATIONS -->
-      <h2>Schematic &amp; Calculations</h2>
-      <figure>
-        <img
-          src="a6_schematic.jpg"
-          alt="Hand-drawn schematic of photoresistor voltage divider, button with 10k pull-down resistor, and LED on pin 9."
-          style="max-width: 450px; width: 100%; height: auto; display: block; margin: 0 auto;"
-        >
-        <figcaption>
-          Schematic for the Assignment 6 circuit. On the left, the photoresistor and a 10&nbsp;kΩ
-          resistor form a voltage divider between 5&nbsp;V and GND; the midpoint is read on A0.
-          In the middle, the pushbutton connects pin 2 to 5&nbsp;V when pressed. A 10&nbsp;kΩ
-          pull-down resistor keeps pin 2 at 0&nbsp;V when the button is not pressed. On the right,
-          pin 9 drives an LED through a current-limiting resistor down to GND.
-        </figcaption>
-      </figure>
-
-      <p>
-        The LDR and 10&nbsp;kΩ resistor form a voltage divider so that the analog input on A0
-        always sees a value between 0&nbsp;V and 5&nbsp;V. When the LDR is bright, its resistance
-        is low, so A0 is closer to 5&nbsp;V (high ADC reading). When it is covered, its resistance
-        increases and A0 moves closer to 0&nbsp;V (low ADC reading). The button uses a 10&nbsp;kΩ
-        pull-down resistor so that pin 2 reads a stable <code>LOW</code> (0) when the button is not pressed
-        and <code>HIGH</code> (1) when the button connects it to 5&nbsp;V.
-      </p>
-
-      <p>
-        I chose 10&nbsp;kΩ for both the LDR divider and the button pull-down because it gives a good
-        mid-range voltage for typical room lighting. If the LDR is about 10&nbsp;kΩ in medium light,
-        the divider output is
-        <code>V<sub>A0</sub> = 5&nbsp;V × (10&nbsp;kΩ / (10&nbsp;kΩ + 10&nbsp;kΩ)) ≈ 2.5&nbsp;V</code>,
-        which is around half of the 0–5&nbsp;V range (≈512 out of 1023 in the ADC). In brighter light
-        the LDR can drop to a few kΩ, and in darker conditions it can be much higher than 10&nbsp;kΩ,
-        so using 10&nbsp;kΩ as the fixed resistor gives a wide, usable spread of readings. For the LED,
-        I assume about a 2&nbsp;V drop across the diode and aim for roughly 10–15&nbsp;mA of current.
-        Using Ohm’s law,
-        <code>R ≈ (5&nbsp;V − 2&nbsp;V) / 0.015&nbsp;A ≈ 200&nbsp;Ω</code>, so I use the nearest standard value
-        of 220&nbsp;Ω. That gives a current of
-        <code>I ≈ (5&nbsp;V − 2&nbsp;V) / 220&nbsp;Ω ≈ 13.6&nbsp;mA</code>, which is bright enough while staying
-        below the ~20&nbsp;mA limit for a typical Arduino I/O pin.
-      </p>
-
-      <!-- 3. CIRCUIT PHOTO -->
-      <h2>Circuit Build</h2>
-      <figure>
-        <img
-          src="a6_circuit.jpg"
-          alt="Photo of the assembled breadboard with Arduino, LDR, button, and LED."
-          style="max-width: 450px; width: 100%; height: auto; display: block; margin: 0 auto;"
-        >
-        <figcaption>
-          Assembled circuit on a breadboard. The photoresistor and 10&nbsp;kΩ resistor share a row
-          for the A0 connection. The pushbutton straddles the breadboard trench, with one side tied
-          to 5&nbsp;V and the other side going to pin 2 and a 10&nbsp;kΩ pull-down to GND.
-          The LED is connected through a series resistor to pin 9, then to GND.
-        </figcaption>
-      </figure>
-
-      <!-- 4. ARDUINO CODE SNIPPET -->
-      <h2>Arduino Firmware (C++)</h2>
-      <p>
-        The Arduino sketch reads the two inputs, sends the values to the webpage as
-        <code>light,button</code> over serial, and listens for single-character commands (<code>'1'</code> / <code>'0'</code>)
-        from the webpage to control the LED on pin 9.
-      </p>
-
-      <pre><code>// Input and output pin assignments
-const int LDR_PIN    = A0;   // photoresistor input
-const int BUTTON_PIN = 2;   // pushbutton input
-const int LED_PIN    = 9;   // LED output controlled from webpage
-
-bool ledOn = false;         // remembers LED state from last command
-
-void setup() {
-  Serial.begin(9600);       // serial speed must match sketch.js
-  pinMode(BUTTON_PIN, INPUT);   // read digital button
-  pinMode(LED_PIN, OUTPUT);    // drive LED on pin 9
-}
-
-void loop() {
-  // Read analog light level and button state
-  int lightVal  = analogRead(LDR_PIN);      // 0–1023 from LDR voltage divider
-  int buttonVal = digitalRead(BUTTON_PIN);  // 0 when not pressed, 1 when pressed
-
-  // Send "light,button" to the webpage once per loop
-  Serial.print(lightVal);
-  Serial.print(',');
-  Serial.println(buttonVal);
-
-  // Process any commands waiting from the webpage
-  while (Serial.available() > 0) {
-    char c = Serial.read();   // read a single character
-
-    if (c == '1') {           // SPACE key toggled LED ON in p5.js
-      ledOn = true;
-    } else if (c == '0') {    // SPACE key toggled LED OFF in p5.js
-      ledOn = false;
-    }
-  }
-
-  // Update the real LED based on the last command from the webpage
-  digitalWrite(LED_PIN, ledOn ? HIGH : LOW);
-
-  delay(5);  // small delay to keep the serial link responsive but not overloaded
-}</code></pre>
-
-      <!-- 5. P5.JS / WEBSERIAL CODE SNIPPET -->
-      <h2>p5.js + WebSerial Code</h2>
-      <p>
-        The p5.js sketch opens the serial port using the p5.webserial helpers, parses incoming
-        <code>light,button</code> values, and uses them to drive the on-screen visualization.
-        When the user presses the SPACE key, the sketch sends <code>'1'</code> or <code>'0'</code> back to
-        the Arduino to control the LED.
-      </p>
-
-      <pre><code>// HCDE 439 – Assignment 6
-// Varun Hariharan
-// LDR + Button → p5 visual; SPACE key → LED on Arduino
-
-const BAUD_RATE = 9600; // must match Serial.begin in Arduino
-
-let port;
-let connectBtn;
-let latestLine = "0,0"; // "light,button"
-let lightVal = 0;
-let buttonVal = 0;
-let ledOn = false;      // our idea of LED state
-
-function setup() {
-  createCanvas(640, 400);
-  textFont("system-ui");
-  textAlign(LEFT, TOP);
-
-  setupSerial(); // create port + connect button
-  updateStatus("Not connected");
-}
-
-function draw() {
-  background(10);
-
-  // Try to read from serial if port is open
-  const isOpen = checkPort();
-  if (isOpen) {
-    readSerial();
-  }
-
-  // ----- Visualize light + button -----
-  // Map light value to background tint
-  const bgLevel = map(lightVal, 0, 1023, 20, 220);
-  background(bgLevel * 0.08, bgLevel * 0.2, bgLevel * 0.35);
-
-  // Text info
-  fill(255);
-  noStroke();
-  textSize(18);
-  text(`Light (A0): ${lightVal}`, 20, 20);
-  text(`Button (2): ${buttonVal === 1 ? "PRESSED" : "not pressed"}`, 20, 50);
-  text(`LED (pin 9) from webpage: ${ledOn ? "ON" : "OFF"}`, 20, 80);
-
-  textSize(14);
-  fill(220);
-  text("Press SPACE to toggle LED. Cover LDR / shine phone light to change visuals.", 20, height - 30);
-
-  // Light bar on the right
-  const barHeight = map(lightVal, 0, 1023, 0, height - 120);
-  noStroke();
-  fill(255, 240);
-  rect(width - 80, height - barHeight - 40, 40, barHeight);
-
-  // Button indicator circle in the center
-  stroke(255);
-  strokeWeight(2);
-  if (buttonVal === 1) {
-    fill(255, 200, 80);
-    circle(width / 2, height / 2, 120);
-  } else {
-    fill(30);
-    circle(width / 2, height / 2, 60);
-  }
-}
-
-// ----------------------
-// Serial helpers (based on class slide patterns)
-// ----------------------
-
-function setupSerial() {
-  port = createSerial();
-
-  // auto-reconnect if browser remembers a port
-  const usedPorts = usedSerialPorts();
-  if (usedPorts.length > 0) {
-    port.open(usedPorts[0], BAUD_RATE);
-    updateStatus("Reconnecting to last used port…");
-  }
-
-  // make a connect button (like in the slides)
-  connectBtn = createButton("Connect");
-  connectBtn.position(20, 120);
-  connectBtn.mousePressed(onConnectButtonClicked);
-}
-
-function onConnectButtonClicked() {
-  if (!port.opened()) {
-    // ask user to choose a port
-    port.open(BAUD_RATE);
-    updateStatus("Connecting…");
-  } else {
-    port.close();
-    updateStatus("Disconnected");
-  }
-}
-
-function checkPort() {
-  if (!port) return false;
-  if (!port.opened()) return false;
-  return true;
-}
-
-function readSerial() {
-  // read a full line "light,button\n"
-  let line = port.readUntil("\n");
-  if (!line || line.length === 0) return;
-
-  latestLine = line.trim();
-  // parse "123,0" → [123, 0]
-  const parts = latestLine.split(",");
-  if (parts.length === 2) {
-    const l = Number(parts[0]);
-    const b = Number(parts[1]);
-
-    if (!Number.isNaN(l)) lightVal = l;
-    if (!Number.isNaN(b)) buttonVal = b;
-  }
-}
-
-// ----------------------
-// Keyboard → Arduino (web talks back)
-// ----------------------
-
-function keyPressed() {
-  // SPACE toggles LED and sends '1'/'0' to Arduino
-  if (key === " ") {
-    ledOn = !ledOn;
-
-    if (checkPort()) {
-      const msg = ledOn ? "1" : "0";
-      // send a single character, slides recommend single-byte commands
-      port.write(msg);
-      updateStatus(`Sent '${msg}' to Arduino (LED ${ledOn ? "ON" : "OFF"})`);
-    } else {
-      updateStatus("Cannot send – not connected");
-    }
-  }
-}
-
-// ----------------------
-// UI helper
-// ----------------------
-
-function updateStatus(msg) {
-  const el = document.getElementById("statusText");
-  if (el) el.textContent = msg;
-}</code></pre>
-
-      <!-- 6. DEMO GIF -->
-      <h2>Demo GIF</h2>
-      <figure>
-        <img
-          src="a6_demo.gif"
-          alt="Animated GIF showing the webpage reacting to the LDR and button, and the LED toggling from the webpage."
-          style="max-width: 100%; height: auto;"
-        >
-        <figcaption>
-          Part 1 shows how covering the LDR (or shining more light) changes the brightness and height
-          of the on-screen visualization. When the button is pressed, the center circle turns yellow
-          to show the press. When SPACE is pressed, the LED turns on — both in the on-screen status
-          text and on the physical LED wired to pin 9.
-        </figcaption>
-      </figure>
-
-      <!-- 7. AI ASSISTANCE STATEMENT -->
-      <h2>AI Assistance Statement</h2>
-      <p>
-        I used an AI assistant (ChatGPT) to help draft and edit the written documentation on this page
-        (section headings, explanatory paragraphs, and some code comments). I designed and wired the circuit
-        myself, wrote and tested the Arduino and p5.js code on my own hardware, and I verified that the
-        behavior shown in the demo GIF matches my actual project.
-      </p>
-    </section>
-  </main>
-
-  <script src="sketch.js"></script>
-</body>
+      <!-- NEW: Assignment 6 card -->
+      <div class="assignment">
+        <a href="a6.html">
+          <h4>Assignment 6: Talking to the Web</h4>
+          <img src="a6_circuit.jpg" alt="A6 WebSerial circuit with LDR, button, and LED" />
+        </a>
+        <p>
+          Arduino sends LDR + button readings to a p5.js webpage via WebSerial; SPACE key on the webpage
+          sends commands back to toggle the physical LED on pin 9.
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
