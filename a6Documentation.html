@@ -11,7 +11,7 @@
       </p>
     </header>
 
-    <!-- LIVE VISUALIZATION PANEL (what you already have) -->
+    <!-- LIVE VISUALIZATION PANEL -->
     <section id="viz-section">
       <p id="statusText">Connecting...</p>
 
@@ -41,7 +41,6 @@
       <!-- 2. SCHEMATIC + CALCULATIONS -->
       <h2>Schematic &amp; Calculations</h2>
       <figure>
-        <!-- CHANGED png -> jpg + smaller size -->
         <img
           src="a6_schematic.jpg"
           alt="Hand-drawn schematic of photoresistor voltage divider, button with 10k pull-down resistor, and LED on pin 9."
@@ -65,7 +64,6 @@
         and <code>HIGH</code> (1) when the button connects it to 5&nbsp;V.
       </p>
 
-      <!-- NEW: explicit resistor calculations -->
       <p>
         I chose 10&nbsp;kΩ for both the LDR divider and the button pull-down because it gives a good
         mid-range voltage for typical room lighting. If the LDR is about 10&nbsp;kΩ in medium light,
@@ -109,7 +107,7 @@
       <pre><code>// Input and output pin assignments
 const int LDR_PIN    = A0;   // photoresistor input
 const int BUTTON_PIN = 2;   // pushbutton input
-const int LED_PIN    = 9;    // LED output controlled from webpage
+const int LED_PIN    = 9;   // LED output controlled from webpage
 
 bool ledOn = false;         // remembers LED state from last command
 
@@ -149,99 +147,159 @@ void loop() {
       <!-- 5. P5.JS / WEBSERIAL CODE SNIPPET -->
       <h2>p5.js + WebSerial Code</h2>
       <p>
-        The p5.js sketch opens the serial port, parses incoming <code>light,button</code> values,
-        and uses them to drive the on-screen visualization. When the user presses the
-        SPACE key, the sketch sends <code>'1'</code> or <code>'0'</code> back to the Arduino to control the LED.
+        The p5.js sketch opens the serial port using the p5.webserial helpers, parses incoming
+        <code>light,button</code> values, and uses them to drive the on-screen visualization.
+        When the user presses the SPACE key, the sketch sends <code>'1'</code> or <code>'0'</code> back to
+        the Arduino to control the LED.
       </p>
 
-      <pre><code>// Global variables for serial and sensor values
-let port;                 // serial port object
-let reader;               // reader for incoming serial data
-let latestLine = "";      // last "light,button" line from Arduino
-let lightVal = 0;         // parsed light value
-let buttonVal = 0;        // parsed button value (0 or 1)
-let ledOn = false;        // current LED state on Arduino
+      <pre><code>// HCDE 439 – Assignment 6
+// Varun Hariharan
+// LDR + Button → p5 visual; SPACE key → LED on Arduino
 
-const BAUD_RATE = 9600;   // must match Serial.begin on Arduino
+const BAUD_RATE = 9600; // must match Serial.begin in Arduino
+
+let port;
+let connectBtn;
+let latestLine = "0,0"; // "light,button"
+let lightVal = 0;
+let buttonVal = 0;
+let ledOn = false;      // our idea of LED state
 
 function setup() {
-  const canvas = createCanvas(600, 350);   // main visualization canvas
-  canvas.parent("p5-container");           // attach canvas into HTML card
+  createCanvas(640, 400);
   textFont("system-ui");
-  noStroke();
-}
+  textAlign(LEFT, TOP);
 
-async function connectSerial() {
-  // Ask the user to choose an Arduino serial port
-  port = await navigator.serial.requestPort();
-  await port.open({ baudRate: BAUD_RATE });
-
-  // Create a reader that gives us lines separated by "\n"
-  reader = port.readable
-    .pipeThrough(new TextDecoderStream())
-    .pipeThrough(new TransformStream({
-      transform(chunk, controller) {
-        chunk.split("\n").forEach(line =&gt; controller.enqueue(line.trim()));
-      }
-    }))
-    .getReader();
-}
-
-async function readSerial() {
-  if (!reader) return;
-
-  const { value, done } = await reader.read();  // try to read one line
-  if (done || !value) return;
-
-  latestLine = value;             // save the latest "light,button" line
-  const parts = latestLine.split(",");  // split into [light, button]
-
-  if (parts.length === 2) {
-    lightVal = int(parts[0]);     // convert light value to number
-    buttonVal = int(parts[1]);    // convert button value to 0 or 1
-  }
+  setupSerial(); // create port + connect button
+  updateStatus("Not connected");
 }
 
 function draw() {
-  background(7, 18, 33);          // dark blue background for the card
+  background(10);
 
-  // Try to read any new serial data each frame
-  readSerial();
+  // Try to read from serial if port is open
+  const isOpen = checkPort();
+  if (isOpen) {
+    readSerial();
+  }
 
-  // Map light value to a bar height and circle color
-  const normLight = constrain(lightVal, 0, 1023) / 1023.0;
-  const barHeight = normLight * (height - 80);
+  // ----- Visualize light + button -----
+  // Map light value to background tint
+  const bgLevel = map(lightVal, 0, 1023, 20, 220);
+  background(bgLevel * 0.08, bgLevel * 0.2, bgLevel * 0.35);
 
-  // Draw text labels
+  // Text info
   fill(255);
-  textSize(16);
-  text("Light (A0): " + lightVal, 40, 40);
-  text("Button (2): " + (buttonVal ? "PRESSED" : "not pressed"), 40, 70);
-  text("LED (pin 9) from webpage: " + (ledOn ? "ON" : "OFF"), 40, 100);
+  noStroke();
+  textSize(18);
+  text(`Light (A0): ${lightVal}`, 20, 20);
+  text(`Button (2): ${buttonVal === 1 ? "PRESSED" : "not pressed"}`, 20, 50);
+  text(`LED (pin 9) from webpage: ${ledOn ? "ON" : "OFF"}`, 20, 80);
 
-  // Circle grows slightly when the button is pressed
-  const circleSize = buttonVal ? 90 : 60;
-  fill(240);
-  circle(170, 220, circleSize);   // outline
-  fill(25);
-  circle(170, 220, circleSize - 8);
+  textSize(14);
+  fill(220);
+  text("Press SPACE to toggle LED. Cover LDR / shine phone light to change visuals.", 20, height - 30);
 
-  // Light bar on the right, higher = brighter
-  fill(240);
-  rect(width - 120, height - 40 - barHeight, 40, barHeight);
+  // Light bar on the right
+  const barHeight = map(lightVal, 0, 1023, 0, height - 120);
+  noStroke();
+  fill(255, 240);
+  rect(width - 80, height - barHeight - 40, 40, barHeight);
+
+  // Button indicator circle in the center
+  stroke(255);
+  strokeWeight(2);
+  if (buttonVal === 1) {
+    fill(255, 200, 80);
+    circle(width / 2, height / 2, 120);
+  } else {
+    fill(30);
+    circle(width / 2, height / 2, 60);
+  }
 }
 
-function keyPressed() {
-  if (key === " ") {              // spacebar controls LED
-    ledOn = !ledOn;               // toggle local state
+// ----------------------
+// Serial helpers (based on class slide patterns)
+// ----------------------
 
-    if (port &amp;&amp; port.writable) {
-      const writer = port.writable.getWriter();
-      const msg = ledOn ? "1" : "0";  // send 1 or 0 to Arduino
-      writer.write(new TextEncoder().encode(msg));
-      writer.releaseLock();
+function setupSerial() {
+  port = createSerial();
+
+  // auto-reconnect if browser remembers a port
+  const usedPorts = usedSerialPorts();
+  if (usedPorts.length > 0) {
+    port.open(usedPorts[0], BAUD_RATE);
+    updateStatus("Reconnecting to last used port…");
+  }
+
+  // make a connect button (like in the slides)
+  connectBtn = createButton("Connect");
+  connectBtn.position(20, 120);
+  connectBtn.mousePressed(onConnectButtonClicked);
+}
+
+function onConnectButtonClicked() {
+  if (!port.opened()) {
+    // ask user to choose a port
+    port.open(BAUD_RATE);
+    updateStatus("Connecting…");
+  } else {
+    port.close();
+    updateStatus("Disconnected");
+  }
+}
+
+function checkPort() {
+  if (!port) return false;
+  if (!port.opened()) return false;
+  return true;
+}
+
+function readSerial() {
+  // read a full line "light,button\n"
+  let line = port.readUntil("\n");
+  if (!line || line.length === 0) return;
+
+  latestLine = line.trim();
+  // parse "123,0" → [123, 0]
+  const parts = latestLine.split(",");
+  if (parts.length === 2) {
+    const l = Number(parts[0]);
+    const b = Number(parts[1]);
+
+    if (!Number.isNaN(l)) lightVal = l;
+    if (!Number.isNaN(b)) buttonVal = b;
+  }
+}
+
+// ----------------------
+// Keyboard → Arduino (web talks back)
+// ----------------------
+
+function keyPressed() {
+  // SPACE toggles LED and sends '1'/'0' to Arduino
+  if (key === " ") {
+    ledOn = !ledOn;
+
+    if (checkPort()) {
+      const msg = ledOn ? "1" : "0";
+      // send a single character, slides recommend single-byte commands
+      port.write(msg);
+      updateStatus(`Sent '${msg}' to Arduino (LED ${ledOn ? "ON" : "OFF"})`);
+    } else {
+      updateStatus("Cannot send – not connected");
     }
   }
+}
+
+// ----------------------
+// UI helper
+// ----------------------
+
+function updateStatus(msg) {
+  const el = document.getElementById("statusText");
+  if (el) el.textContent = msg;
 }</code></pre>
 
       <!-- 6. DEMO GIF -->
@@ -253,9 +311,10 @@ function keyPressed() {
           style="max-width: 100%; height: auto;"
         >
         <figcaption>
-          Animated demo of the system. The left circle grows when the button is pressed.
-          The right bar moves with the light level on the photoresistor. Pressing SPACE
-          on the keyboard toggles both the on-screen LED state and the physical LED on pin 9.
+          Part 1 shows how covering the LDR (or shining more light) changes the brightness and height
+          of the on-screen visualization. When the button is pressed, the center circle turns yellow
+          to show the press. When SPACE is pressed, the LED turns on — both in the on-screen status
+          text and on the physical LED wired to pin 9.
         </figcaption>
       </figure>
 
