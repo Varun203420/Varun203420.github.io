@@ -41,12 +41,14 @@
       <!-- 2. SCHEMATIC + CALCULATIONS -->
       <h2>Schematic &amp; Calculations</h2>
       <figure>
-        <img src="a6_schematic.png" alt="Hand-drawn schematic of photoresistor voltage divider and button with 10k pull-down resistor." style="max-width: 100%; height: auto;">
+        <!-- CHANGED png -> jpg -->
+        <img src="a6_schematic.jpg" alt="Hand-drawn schematic of photoresistor voltage divider, button with 10k pull-down resistor, and LED on pin 9." style="max-width: 100%; height: auto;">
         <figcaption>
           Schematic for the Assignment 6 circuit. On the left, the photoresistor and a 10&nbsp;kΩ
           resistor form a voltage divider between 5&nbsp;V and GND; the midpoint is read on A0.
-          On the right, the pushbutton connects pin 2 to 5&nbsp;V when pressed. A 10&nbsp;kΩ
-          pull-down resistor keeps pin 2 at 0&nbsp;V when the button is not pressed.
+          In the middle, the pushbutton connects pin 2 to 5&nbsp;V when pressed. A 10&nbsp;kΩ
+          pull-down resistor keeps pin 2 at 0&nbsp;V when the button is not pressed. On the right,
+          pin 9 drives an LED through a current-limiting resistor down to GND.
         </figcaption>
       </figure>
 
@@ -59,6 +61,23 @@
         and <code>HIGH</code> (1) when the button connects it to 5&nbsp;V.
       </p>
 
+      <!-- NEW: explicit resistor calculations -->
+      <p>
+        I chose 10&nbsp;kΩ for both the LDR divider and the button pull-down because it gives a good
+        mid-range voltage for typical room lighting. If the LDR is about 10&nbsp;kΩ in medium light,
+        the divider output is
+        <code>V<sub>A0</sub> = 5&nbsp;V × (10&nbsp;kΩ / (10&nbsp;kΩ + 10&nbsp;kΩ)) ≈ 2.5&nbsp;V</code>,
+        which is around half of the 0–5&nbsp;V range (≈512 out of 1023 in the ADC). In brighter light
+        the LDR can drop to a few kΩ, and in darker conditions it can be much higher than 10&nbsp;kΩ,
+        so using 10&nbsp;kΩ as the fixed resistor gives a wide, usable spread of readings. For the LED,
+        I assume about a 2&nbsp;V drop across the diode and aim for roughly 10–15&nbsp;mA of current.
+        Using Ohm’s law,
+        <code>R ≈ (5&nbsp;V − 2&nbsp;V) / 0.015&nbsp;A ≈ 200&nbsp;Ω</code>, so I use the nearest standard value
+        of 220&nbsp;Ω. That gives a current of
+        <code>I ≈ (5&nbsp;V − 2&nbsp;V) / 220&nbsp;Ω ≈ 13.6&nbsp;mA</code>, which is bright enough while staying
+        below the ~20&nbsp;mA limit for a typical Arduino I/O pin.
+      </p>
+
       <!-- 3. CIRCUIT PHOTO -->
       <h2>Circuit Build</h2>
       <figure>
@@ -67,7 +86,7 @@
           Assembled circuit on a breadboard. The photoresistor and 10&nbsp;kΩ resistor share a row
           for the A0 connection. The pushbutton straddles the breadboard trench, with one side tied
           to 5&nbsp;V and the other side going to pin 2 and a 10&nbsp;kΩ pull-down to GND.
-          The LED is connected through a series resistor to pin 9.
+          The LED is connected through a series resistor to pin 9, then to GND.
         </figcaption>
       </figure>
 
@@ -81,7 +100,7 @@
 
       <pre><code>// Input and output pin assignments
 const int LDR_PIN    = A0;   // photoresistor input
-const int BUTTON_PIN = 2;    // pushbutton input
+const int BUTTON_PIN = 2;   // pushbutton input
 const int LED_PIN    = 9;    // LED output controlled from webpage
 
 bool ledOn = false;         // remembers LED state from last command
@@ -227,6 +246,15 @@ function keyPressed() {
           on the keyboard toggles both the on-screen LED state and the physical LED on pin 9.
         </figcaption>
       </figure>
+
+      <!-- 7. AI ASSISTANCE STATEMENT -->
+      <h2>AI Assistance Statement</h2>
+      <p>
+        I used an AI assistant (ChatGPT) to help draft and edit the written documentation on this page
+        (section headings, explanatory paragraphs, and some code comments). I designed and wired the circuit
+        myself, wrote and tested the Arduino and p5.js code on my own hardware, and I verified that the
+        behavior shown in the demo GIF matches my actual project.
+      </p>
     </section>
   </main>
 
